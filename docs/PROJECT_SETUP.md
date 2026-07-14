@@ -8,7 +8,7 @@
 
 ```
 VibeMap/
-├── backend/                      # FastAPI 백엔드
+├── chatbot/                      # FastAPI 백엔드
 │   ├── app/
 │   │   ├── api/
 │   │   │   ├── posts.py         # 게시글 라우터
@@ -18,7 +18,7 @@ VibeMap/
 │   │   ├── models/
 │   │   │   ├── post.py          # Post 모델 (SQLAlchemy)
 │   │   │   ├── comment.py       # Comment 모델
-│   │   │   └── event.py         # Event 모델
+│   │   │   # Note: Event 데이터는 DB가 아니라 프로젝트자료/data/*.json 파일에서 읽어 사용합니다.
 │   │   ├── schemas/
 │   │   │   ├── post.py          # Post Pydantic 스키마
 │   │   │   ├── comment.py       # Comment 스키마
@@ -32,7 +32,7 @@ VibeMap/
 │   ├── .env                      # 환경 변수 (Git 제외)
 │   ├── .env.example              # 환경 변수 템플릿
 │   ├── .gitignore                # Git 무시 파일
-│   ├── requirements.txt           # Python 의존성
+│   ├── requirements.txt          # Python 의존성
 │   └── README.md                 # 백엔드 문서
 │
 ├── frontend/                     # Vue.js 프론트엔드
@@ -126,22 +126,14 @@ VibeMap/
 | created_at | DATETIME | 작성 일시 | DEFAULT=NOW() |
 | updated_at | DATETIME | 수정 일시 | DEFAULT=NOW() |
 
-### Event 테이블
-행사/축제 정보를 저장하는 테이블
+### Event 데이터 소스
+행사/축제 데이터는 DB에 저장하지 않고 프로젝트 내 JSON 원본 파일을 직접 읽어 응답합니다.
 
-| 칼럼 | 타입 | 설명 | 제약조건 |
-|------|------|------|---------|
-| id | INTEGER | 행사 ID | PK, AUTO_INCREMENT |
-| title | VARCHAR(255) | 행사명 | NOT NULL |
-| description | TEXT | 행사 설명 | - |
-| date_start | DATETIME | 시작 일시 | NOT NULL |
-| date_end | DATETIME | 종료 일시 | NOT NULL |
-| location | VARCHAR(255) | 행사 장소 | - |
-| latitude | FLOAT | 위도 | - |
-| longitude | FLOAT | 경도 | - |
-| category | VARCHAR(50) | 분류 | '축제', '전시', '공연' 등 |
-| region | VARCHAR(50) | 지역 | DEFAULT='seoul' |
-| created_at | DATETIME | 생성 일시 | DEFAULT=NOW() |
+- 파일 위치 예시:
+	- `프로젝트자료/data/서울/서울_축제공연행사.json`
+	- `프로젝트자료/data/부산/부산_축제공연행사.json`
+
+참고: 이벤트 관련 필터링/검색은 이 JSON 원본을 기반으로 구현합니다. 필요 시 별도 마이그레이션 스크립트를 통해 DB로 이전할 수 있습니다.
 
 ---
 

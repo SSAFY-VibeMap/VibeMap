@@ -18,6 +18,7 @@ DATABASE_URL=sqlite:///./vibemap.db
 
 # ===== OpenAI API =====
 OPENAI_API_KEY=sk-...your-openai-key...
+OPENAI_MODEL=gpt-4o-mini
 
 # ===== 카카오 지도 API =====
 KAKAO_MAP_API_KEY=...your-kakao-map-key...
@@ -49,7 +50,7 @@ VITE_ENV=development
 
 **백엔드**
 ```bash
-cd backend
+cd chatbot
 cp .env.example .env
 ```
 
@@ -93,7 +94,7 @@ VITE_KAKAO_MAP_API_KEY=...
 ### Step 3: 데이터베이스 설정 검증
 
 ```bash
-cd backend
+cd chatbot
 
 # 가상환경 활성화 후
 python -c "from app.database import engine; from app.models import *; engine.create_all()"
@@ -112,7 +113,8 @@ python -c "from app.database import engine; from app.models import *; engine.cre
 
 ```
 OPENAI_API_KEY=sk-proj-...
-KAKAO_MAP_API_KEY=...
+OPENAI_MODEL=gpt-4o-mini
+NAVER_MAP_API_KEY=...
 DATABASE_URL=sqlite:///./vibemap.db
 FRONTEND_URL=https://vibemap.netlify.app
 API_SECRET_KEY=prod-secret-key-change-this
@@ -209,7 +211,7 @@ VITE_ENV=production
 ### 백엔드 검증
 
 ```bash
-cd backend
+cd chatbot
 
 # 1. .env 파일 로드 확인
 python -c "from dotenv import load_dotenv; load_dotenv(); import os; print('API KEY:', os.getenv('OPENAI_API_KEY')[:10]+'***')"
@@ -300,13 +302,13 @@ const OPENAI_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 ### "OPENAI_API_KEY not found" 에러
 ```bash
 # 1. .env 파일이 있는지 확인
-ls -la backend/.env
+ls -la chatbot/.env
 
 # 2. 환경 변수 로드 코드 확인
 # dotenv import 및 load_dotenv() 호출 확인
 
 # 3. API 키 값 확인
-cat backend/.env | grep OPENAI
+cat chatbot/.env | grep OPENAI
 ```
 
 ### "Database connection failed" 에러

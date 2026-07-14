@@ -1,32 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '../views/Home.vue';
-import BoardView from '../views/Board.vue';
 import EventsView from '../views/Events.vue';
 
 const routes = [
   {
     path: '/',
     name: 'home',
-    component: HomeView,
+    component: EventsView,
     meta: {
-      title: 'VibeMap | 지역 정보 커뮤니티',
-    },
-  },
-  {
-    path: '/board',
-    name: 'board',
-    component: BoardView,
-    meta: {
-      title: '게시판 | VibeMap',
+      title: 'VibeMap | 서울 축제 동행',
     },
   },
   {
     path: '/events',
-    name: 'events',
-    component: EventsView,
-    meta: {
-      title: '행사 | VibeMap',
-    },
+    redirect: '/',
   },
 ];
 

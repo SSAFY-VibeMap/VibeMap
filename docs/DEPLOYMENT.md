@@ -27,7 +27,7 @@
 ### 코드 품질 검사
 ```bash
 # 백엔드
-cd backend
+cd chatbot
 black app/  # 포맷팅
 flake8 app/ # 린팅
 
@@ -49,10 +49,10 @@ npm run build # 빌드 테스트
 git status
 
 # requirements.txt 최신화
-pip freeze > backend/requirements.txt
+pip freeze > chatbot/requirements.txt
 
 # 커밋 및 푸시
-git add backend/
+git add chatbot/
 git commit -m "chore: requirements.txt 업데이트"
 git push origin main
 ```
@@ -77,10 +77,10 @@ Environment: Python 3.11
 Region: Singapore (또는 가장 가까운 지역)
 
 Build Command:
-pip install -r backend/requirements.txt
+pip install -r chatbot/requirements.txt
 
 Start Command:
-cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+cd chatbot && uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
 #### 3단계: 환경 변수 설정
@@ -88,7 +88,8 @@ Render 대시보드 → "Environment" → "Add Secret File" 또는 "Add Environm
 
 ```
 OPENAI_API_KEY=sk-proj-...
-KAKAO_MAP_API_KEY=...
+OPENAI_MODEL=gpt-4o-mini
+NAVER_MAP_API_KEY=...
 DATABASE_URL=sqlite:///./vibemap.db
 FRONTEND_URL=https://vibemap.netlify.app
 API_SECRET_KEY=your-production-secret-key
@@ -329,7 +330,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Run tests
         run: |
-          cd backend
+          cd chatbot
           pip install -r requirements.txt
           pytest
 ```
@@ -390,7 +391,7 @@ jobs:
 ### 백엔드 (Render)
 - URL: https://vibemap-backend.onrender.com
 - API 문서: https://vibemap-backend.onrender.com/docs
-- 저장소: https://github.com/your-org/vibemap/tree/main/backend
+- 저장소: https://github.com/your-org/vibemap/tree/main/chatbot
 - 배포 브랜치: main
 
 ### 환경 설정

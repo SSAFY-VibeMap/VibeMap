@@ -8,7 +8,7 @@
 
 ```
 VibeMap/
-├── backend/                      # FastAPI 백엔드
+├── chatbot/                      # FastAPI 백엔드
 │   ├── app/
 │   │   ├── api/
 │   │   │   ├── posts.py         # 게시글 라우터
@@ -32,7 +32,7 @@ VibeMap/
 │   ├── .env                      # 환경 변수 (Git 제외)
 │   ├── .env.example              # 환경 변수 템플릿
 │   ├── .gitignore                # Git 무시 파일
-│   ├── requirements.txt           # Python 의존성
+│   ├── requirements.txt          # Python 의존성
 │   └── README.md                 # 백엔드 문서
 │
 ├── frontend/                     # Vue.js 프론트엔드

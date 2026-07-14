@@ -17,7 +17,6 @@
 ## 🚀 배포 전 체크리스트
 
 ### 배포 전 필수 작업
-- [ ] 모든 코드 테스트 완료
 - [ ] 환경 변수 설정 완료 (`.env.example` 작성)
 - [ ] Git에 민감정보 커밋 안 됨 확인
 - [ ] `.gitignore`에 `.env` 포함 확인
@@ -159,7 +158,7 @@ cp .env.example .env
 
 # 백엔드 URL 업데이트
 VITE_API_BASE_URL=https://vibemap-backend.onrender.com
-VITE_NAVER_MAP_API_KEY=...
+VITE_KAKAO_MAP_API_KEY=...
 ```
 
 #### 3단계: 저장소에 커밋
@@ -202,7 +201,7 @@ Build settings:
 
 ```
 VITE_API_BASE_URL=https://vibemap-backend.onrender.com
-VITE_NAVER_MAP_API_KEY=...
+VITE_KAKAO_MAP_API_KEY=...
 VITE_ENV=production
 ```
 

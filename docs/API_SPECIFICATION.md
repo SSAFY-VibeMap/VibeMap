@@ -489,16 +489,37 @@ POST /api/chat
 
 ```javascript
 // services/apiClient.js
-import axios from 'axios';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
-const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:8000';
-
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
+const apiClient = {
+  get: async (url, options = {}) => fetch(`${API_BASE_URL}${url}`, { ...options }),
+  post: async (url, data, options = {}) => fetch(`${API_BASE_URL}${url}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    },
+    body: JSON.stringify(data),
+    ...options
+  }),
+  put: async (url, data, options = {}) => fetch(`${API_BASE_URL}${url}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    },
+    body: JSON.stringify(data),
+    ...options
+  }),
+  delete: async (url, options = {}) => fetch(`${API_BASE_URL}${url}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    },
+    ...options
+  })
+};
 
 export default apiClient;
 ```

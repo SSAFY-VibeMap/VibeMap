@@ -42,10 +42,10 @@ VibeMap/
 │   │   │   ├── PostDetail.vue    # 게시글 상세
 │   │   │   ├── PostForm.vue      # 게시글 작성/수정
 │   │   │   ├── ChatBox.vue       # 채팅 UI (플로팅)
-│   │   │   ├── MapView.vue       # 네이버 지도
+│   │   │   ├── MapView.vue       # Kakao 지도
 │   │   │   └── EventPanel.vue    # 축제 정보 패널
 │   │   ├── services/
-│   │   │   ├── apiClient.js      # Axios 설정
+│   │   │   ├── apiClient.js      # fetch 설정
 │   │   │   ├── postService.js    # 게시글 API
 │   │   │   └── chatService.js    # 챗봇 API
 │   │   ├── views/
@@ -92,9 +92,9 @@ VibeMap/
 | Framework | Vue.js 3 | UI 프레임워크 |
 | Build Tool | Vite | 빠른 번들링 |
 | Router | Vue Router | 페이지 네비게이션 |
-| HTTP Client | Axios | API 통신 |
+| HTTP Client | fetch | API 통신 |
 | Styling | CSS3 | UI 스타일 |
-| Map API | Naver Map | 지도 기능 |
+| Map API | Kakao Map | 지도 기능 |
 | Hosting | Netlify | 프론트엔드 호스팅 |
 
 ---
@@ -165,11 +165,11 @@ VibeMap/
 | 3 | 커뮤니티 게시글 모델/CRUD API, 비밀번호 검증 | 백광훈 (BE) | 2일 | 예정 |
 | 4 | 서울 행사 데이터 모델, 조회 API, 검색 보조 로직 | 신예지 (BE) | 2일 | 예정 |
 | 5 | 챗봇 API 설계 및 /api/chat 구현 | 백광훈 (BE) | 2일 | 예정 |
-| 6 | Naver Map 연동용 데이터 정리, 핀용 응답 포맷 | 신예지 (BE) | 2일 | 예정 |
+| 6 | Kakao Map 연동용 데이터 정리, 핀용 응답 포맷 | 신예지 (BE) | 2일 | 예정 |
 | 7 | Vue 프로젝트 초기화, 라우팅, 공통 레이아웃 | 윤종근 (FE) | 1일 | 예정 |
 | 8 | 게시판 목록/상세/작성/수정 UI | 윤종근 (FE) | 1일 | 예정 |
 | 9 | 채팅 UI, 대화 히스토리, 플로팅 버튼 | 윤종근 (FE) | 2일 | 예정 |
-| 10 | Naver Map 화면, 행사 핀 표시, 모바일 대응 | 윤종근 (FE) | 2일 | 예정 |
+| 10 | Kakao Map 화면, 행사 핀 표시, 모바일 대응 | 윤종근 (FE) | 2일 | 예정 |
 | 11 | 축제 모집 화면 또는 모집 패널 | 윤종근 (FE) | 2일 | 예정 |
 
 ---
@@ -199,7 +199,7 @@ VibeMap/
 - ✅ Event 데이터 모델 설계
 - ✅ 행사 조회 API 구현
 - ✅ 검색 보조 로직 (챗봇용)
-- ✅ Naver Map 연동용 데이터 정리
+- ✅ Kakao Map 연동용 데이터 정리
 - ✅ CORS 설정 및 배포 환경 준비
 
 #### **윤종근** (프론트엔드 개발자)

@@ -19,8 +19,8 @@ DATABASE_URL=sqlite:///./vibemap.db
 # ===== OpenAI API =====
 OPENAI_API_KEY=sk-...your-openai-key...
 
-# ===== 네이버 지도 API =====
-NAVER_MAP_API_KEY=...your-naver-map-key...
+# ===== 카카오 지도 API =====
+KAKAO_MAP_API_KEY=...your-kakao-map-key...
 
 # ===== CORS 설정 =====
 FRONTEND_URL=http://localhost:5173
@@ -34,8 +34,8 @@ LOG_LEVEL=DEBUG
 # ===== API 설정 =====
 VITE_API_BASE_URL=http://localhost:8000
 
-# ===== 네이버 지도 =====
-VITE_NAVER_MAP_API_KEY=...your-naver-map-key...
+# ===== 카카오 지도 =====
+VITE_KAKAO_MAP_API_KEY=...your-kakao-map-key...
 
 # ===== 환경 =====
 VITE_ENV=development
@@ -72,20 +72,20 @@ cp .env.example .env
 OPENAI_API_KEY=sk-proj-...
 ```
 
-#### Naver Map API 키 획득
-1. [Naver Developers](https://developers.naver.com) 접속
+#### Kakao Map API 키 획득
+1. [Kakao Developers](https://developers.kakao.com) 접속
 2. 애플리케이션 등록
 3. Maps API 활성화
 4. 프론트/백엔드 `.env` 파일에 등록
 
 **백엔드**
 ```env
-NAVER_MAP_API_KEY=...
+KAKAO_MAP_API_KEY=...
 ```
 
 **프론트엔드**
 ```env
-VITE_NAVER_MAP_API_KEY=...
+VITE_KAKAO_MAP_API_KEY=...
 ```
 
 ---
@@ -112,7 +112,7 @@ python -c "from app.database import engine; from app.models import *; engine.cre
 
 ```
 OPENAI_API_KEY=sk-proj-...
-NAVER_MAP_API_KEY=...
+KAKAO_MAP_API_KEY=...
 DATABASE_URL=sqlite:///./vibemap.db
 FRONTEND_URL=https://vibemap.netlify.app
 API_SECRET_KEY=prod-secret-key-change-this
@@ -136,7 +136,7 @@ LOG_LEVEL=INFO
 
 ```
 VITE_API_BASE_URL=https://vibemap-backend.onrender.com
-VITE_NAVER_MAP_API_KEY=...
+VITE_KAKAO_MAP_API_KEY=...
 VITE_ENV=production
 ```
 
@@ -191,7 +191,7 @@ VITE_ENV=production
 ### 개발 환경 (.env 로컬 파일)
 - [ ] `DATABASE_URL` 설정 (SQLite)
 - [ ] `OPENAI_API_KEY` 설정
-- [ ] `NAVER_MAP_API_KEY` 설정
+- [ ] `KAKAO_MAP_API_KEY` 설정
 - [ ] `FRONTEND_URL` 설정 (로컬: http://localhost:5173)
 - [ ] `API_SECRET_KEY` 설정
 - [ ] `.gitignore`에 `.env` 포함 확인

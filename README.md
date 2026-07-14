@@ -46,8 +46,8 @@
 ### 프론트엔드
 - **Framework**: Vue.js
 - **Build Tool**: Vite
-- **HTTP Client**: Axios
-- **Map**: Naver Map API
+- **HTTP Client**: fetch
+- **Map**: Kakao Map API
 - **Hosting**: Netlify
 
 ---

@@ -1,28 +1,101 @@
 <script setup>
 defineProps({
+  posts: {
+    type: Array,
+    default: () => [],
+  },
   events: {
     type: Array,
     default: () => [],
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  activeEventId: {
+    type: String,
+    default: null,
+  },
+  page: {
+    type: Number,
+    default: 1,
+  },
+  pageCount: {
+    type: Number,
+    default: 1,
+  },
+  total: {
+    type: Number,
+    default: null,
+  },
 });
+
+defineEmits(["select-post", "change-page"]);
 </script>
 
 <template>
-  <section class="panel-card event-panel">
-    <header>
-      <p class="eyebrow">행사 패널</p>
-      <h3>주변 축제 목록</h3>
-    </header>
-
-    <ul v-if="events.length" class="event-list">
-      <li v-for="event in events" :key="event.id">
-        <strong>{{ event.title }}</strong>
-        <span>{{ event.venue_name || event.venue_address || '장소 정보 없음' }}</span>
-      </li>
-    </ul>
-
-    <div v-else class="empty-state">
-      축제 데이터를 불러오면 이 패널에 노출됩니다.
+  <section class="event-panel">
+    <div class="section-head">
+      <h2>모집 게시판</h2>
+      <span class="section-badge">{{ total ?? posts.length }}개 글</span>
     </div>
+
+    <div v-if="loading" class="event-stack">
+      <article
+        v-for="index in 3"
+        :key="index"
+        class="event-card event-card-placeholder"
+      ></article>
+    </div>
+
+    <div v-else-if="posts.length" class="event-stack">
+      <button
+        v-for="post in posts"
+        :key="post.id"
+        type="button"
+        class="post-card"
+        :class="{
+          'post-card-active': post.content_id === activeEventId,
+        }"
+        @click="$emit('select-post', post)"
+      >
+        <div class="post-card-header">
+          <h3 class="post-card-title">{{ post.title }}</h3>
+          <span class="section-badge post-count-badge">{{
+            post.comments?.length ?? 0
+          }}</span>
+        </div>
+
+        <p class="post-card-content">{{ post.content }}</p>
+
+        <div class="post-card-footer">
+          <span
+            v-if="events.find((event) => event.id === post.content_id)"
+            class="post-card-tag"
+          >
+            {{
+              events.find((event) => event.id === post.content_id)
+                ?.venue_name || "장소 정보 없음"
+            }}
+          </span>
+          <span class="post-card-tag">{{ post.meet_at }} 만남</span>
+          <span class="post-card-meta">{{ post.created_at }}</span>
+        </div>
+      </button>
+    </div>
+
+    <div v-else class="event-stack" aria-label="모집 게시판 빈 상태">
+      <article
+        v-for="index in 3"
+        :key="index"
+        class="event-card event-card-placeholder"
+      ></article>
+    </div>
+
+    <nav v-if="pageCount > 1" class="pagination" aria-label="모집 게시글 페이지">
+      <button type="button" :disabled="page === 1" aria-label="이전 페이지" @click="$emit('change-page', page - 1)">‹</button>
+      <button v-for="number in pageCount" :key="number" type="button" :class="{ active: number === page }" @click="$emit('change-page', number)">{{ number }}</button>
+      <button type="button" :disabled="page === pageCount" aria-label="다음 페이지" @click="$emit('change-page', page + 1)">›</button>
+    </nav>
   </section>
 </template>

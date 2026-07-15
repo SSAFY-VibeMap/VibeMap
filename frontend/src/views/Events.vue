@@ -351,7 +351,21 @@ onBeforeUnmount(() => { window.removeEventListener("vibemap-search", receiveSear
       <EventPanel :posts="posts" :events="events" :loading="postsLoading" :active-post-id="selectedPostId" :page="currentPage" :page-count="postPageCount" :total="postTotal" @select-post="openDetail" @change-page="changePage" />
     </div>
 
-    <div v-if="eventDetail" class="modal-backdrop" @click.self="eventDetail = null"><article class="modal-card event-detail-modal"><button class="modal-close" type="button" aria-label="닫기" @click="eventDetail = null"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg></button><img :src="eventDetail.image_url" :alt="eventDetail.title" class="event-detail-image" /><p class="eyebrow">서울 행사</p><h2>{{ eventDetail.title }}</h2><p class="event-detail-place">📍 {{ eventDetail.venue_name }} · {{ eventDetail.venue_address }}</p><div class="modal-footer"><button class="button button-primary" type="button" @click="selectEvent(eventDetail); eventDetail = null; openForm()">이 행사로 모집 글쓰기</button></div></article></div>
+    <div v-if="eventDetail" class="modal-backdrop" @click.self="eventDetail = null">
+      <article class="modal-card event-detail-modal" style="max-height:600PX; overflow:auto;">
+        <button class="modal-close" type="button" aria-label="닫기" @click="eventDetail = null"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg></button>
+        <img :src="eventDetail.image_url" :alt="eventDetail.title" class="event-detail-image" />
+        <div style="padding:16px; overflow:auto;">
+      <p class="eyebrow">서울 행사</p>
+      <h2>{{ eventDetail.title }}</h2>
+      <p class="event-detail-place">📍{{ eventDetail.venue_address }}</p>
+      <p class="event-detail-dates" style="font-size:1.05rem;">📅 {{ formatEventDate(eventDetail.eventstartdate) }} ~ {{ formatEventDate(eventDetail.eventenddate) }}</p>
+      <div class="modal-footer" style="margin-top:12px;">
+        <button class="button button-primary" type="button" @click="selectEvent(eventDetail); eventDetail = null; openForm()">이 행사로 모집 글쓰기</button>
+      </div>
+    </div>
+      </article>
+    </div>
 
     <div v-if="detailPost" class="modal-backdrop" @click.self="detailPost = null">
       <article class="modal-card detail-modal">
@@ -375,3 +389,11 @@ onBeforeUnmount(() => { window.removeEventListener("vibemap-search", receiveSear
     <section v-if="chatOpen" class="chat-window"><header><strong>축제 도우미</strong><span>AI 챗봇</span></header><div class="chat-messages"><p v-for="message in messages" :key="message.id" :class="['chat-message', message.role]">{{ message.text }}</p><p v-if="chatLoading" class="chat-message bot">답변을 작성하고 있어요.</p></div><form class="chat-input" @submit.prevent="sendChat"><input v-model="chatInput" :disabled="chatLoading" placeholder="메시지를 입력하세요" /><button class="button button-primary" type="submit" :disabled="chatLoading">{{ chatLoading ? '전송 중' : '전송' }}</button></form></section>
   </section>
 </template>
+
+<script>
+function formatEventDate(value) {
+  if (!value || !/^\d{8}$/.test(String(value))) return '일정 미정';
+  const date = new Date(`${String(value).slice(0,4)}-${String(value).slice(4,6)}-${String(value).slice(6,8)}T00:00:00`);
+  return new Intl.DateTimeFormat('ko-KR', { month: 'short', day: 'numeric' }).format(date);
+}
+</script>

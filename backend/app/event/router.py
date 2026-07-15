@@ -1,6 +1,6 @@
 from typing import Optional
 from fastapi import APIRouter, Query, HTTPException
-from ..services.event_service import EventService
+from .service import EventService
 
 router = APIRouter()
 

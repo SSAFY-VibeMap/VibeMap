@@ -6,8 +6,8 @@ from fastapi import HTTPException, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.post.models import Comment, Post
-from app.post.schemas import (
+from backend.app.post.models import Comment, Post
+from backend.app.post.schemas import (
     CommentCreate,
     CommentUpdate,
     PostCreate,

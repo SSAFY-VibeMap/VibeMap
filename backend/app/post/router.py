@@ -22,14 +22,13 @@ router = APIRouter(prefix="/api/posts", tags=["posts"])
 @router.get("", response_model=PostListResponse)
 def list_posts(
     keyword: str | None = None,
-    region: str | None = None,
     latitude: float | None = None,
     longitude: float | None = None,
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
 ) -> PostListResponse:
-    return post_service.list_posts(db, keyword=keyword, region=region, page=page, limit=limit)
+    return post_service.list_posts(db, keyword=keyword, page=page, limit=limit)
 
 
 @router.get("/{post_id}", response_model=PostDetail)

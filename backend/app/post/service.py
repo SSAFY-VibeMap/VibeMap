@@ -39,7 +39,6 @@ def get_comment_or_404(db: Session, post_id: int, comment_id: int) -> Comment:
 def list_posts(
     db: Session,
     keyword: str | None = None,
-    region: str | None = None,
     page: int = 1,
     limit: int = 10,
 ) -> PostListResponse:
@@ -53,8 +52,6 @@ def list_posts(
     if keyword:
         pattern = f"%{keyword}%"
         filters.append(or_(Post.title.ilike(pattern), Post.content.ilike(pattern)))
-    if region:
-        filters.append(Post.region == region)
 
     for condition in filters:
         query = query.where(condition)

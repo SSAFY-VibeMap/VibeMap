@@ -13,7 +13,7 @@ class OpenAIService:
         self.model = model or os.getenv("OPENAI_MODEL", "gpt-5-mini")
         self.client = OpenAI(api_key=self.api_key) if self.api_key else None
 
-    def generate_response(self, message: str, region: str | None = None) -> str:
+    def generate_response(self, message: str) -> str:
         if self.client is None:
             raise RuntimeError("OPENAI_API_KEY is not configured")
 
@@ -21,17 +21,13 @@ class OpenAIService:
             "You are the VibeMap chatbot. Answer in Korean, keep responses concise, "
             "and help with local festivals, community posts, and nearby recommendations."
         )
-        if region:
-            user_prompt = f"지역: {region}\n질문: {message}"
-        else:
-            user_prompt = message
 
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
+                    {"role": "user", "content": message},
                 ],
             )
         except OpenAIError as exc:

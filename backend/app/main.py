@@ -9,11 +9,20 @@ from app.post.router import router as post_router
 from app.event.router import router as event_router
 
 app = FastAPI(title="VibeMap Backend")
-frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+frontend_url = os.getenv("FRONTEND_URL", "")
+allowed_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://ssafy-vibemap.netlify.app",
+]
+if frontend_url:
+    allowed_origins.append(frontend_url)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url, frontend_url.replace("localhost", "127.0.0.1")],
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https://([a-z0-9-]+--)?ssafy-vibemap\.netlify\.app",
+
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

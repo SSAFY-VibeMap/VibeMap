@@ -1,5 +1,5 @@
 <script setup>
-import { nextTick, onMounted, ref } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 const props = defineProps({
   markers: { type: Array, default: () => [] },
@@ -12,6 +12,11 @@ const props = defineProps({
 const mapElement = ref(null);
 const mapError = ref("");
 let map;
+let kakaoMarkers = [];
+
+function validCoordinates(event) {
+  return Number.isFinite(Number(event?.latitude)) && Number.isFinite(Number(event?.longitude));
+}
 
 function loadKakaoMaps() {
   if (window.kakao?.maps) return Promise.resolve(window.kakao);
@@ -36,6 +41,34 @@ function loadKakaoMaps() {
   });
 }
 
+function clearMarkers() {
+  kakaoMarkers.forEach((marker) => marker.setMap(null));
+  kakaoMarkers = [];
+}
+
+function renderMarkers() {
+  if (!map || !window.kakao?.maps) return;
+  clearMarkers();
+
+  const events = props.markers.filter(validCoordinates);
+  const bounds = new window.kakao.maps.LatLngBounds();
+  events.forEach((event) => {
+    const position = new window.kakao.maps.LatLng(Number(event.latitude), Number(event.longitude));
+    const marker = new window.kakao.maps.Marker({
+      map,
+      position,
+      title: event.title,
+      zIndex: event.id === props.selectedEventId ? 2 : 1,
+    });
+    window.kakao.maps.event.addListener(marker, "click", () => props.onSelectEvent?.(event));
+    kakaoMarkers.push(marker);
+    bounds.extend(position);
+  });
+
+  if (events.length > 1) map.setBounds(bounds, 48, 48, 48, 48);
+  else if (events.length === 1) map.setCenter(bounds.getSouthWest());
+}
+
 onMounted(async () => {
   try {
     const kakao = await loadKakaoMaps();
@@ -45,11 +78,15 @@ onMounted(async () => {
         center: new kakao.maps.LatLng(37.5665, 126.978),
         level: 8,
       });
+      renderMarkers();
     });
   } catch (error) {
     mapError.value = error.message;
   }
 });
+
+watch(() => props.markers, renderMarkers, { deep: true });
+onBeforeUnmount(clearMarkers);
 
 </script>
 

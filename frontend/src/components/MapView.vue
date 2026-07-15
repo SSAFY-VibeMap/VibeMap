@@ -7,12 +7,23 @@ const props = defineProps({
   onSelectEvent: { type: Function, default: null },
   selectedEvent: { type: Object, default: null },
   onViewEvent: { type: Function, default: null },
+  // Optional initial center: { latitude, longitude }
+  initialCenter: { type: Object, default: null },
 });
+const emit = defineEmits(["center-changed"]);
 
 const mapElement = ref(null);
 const mapError = ref("");
 let map;
 let kakaoMarkers = [];
+let lastCenterEmit = 0;
+// Flag set when the user manually interacts (drag/zoom) — prevents auto-centering
+let userInteracted = false;
+// When true, temporarily prevent auto-fit (used during programmatic pans)
+let suppressAutoFit = false;
+let programmaticPanTimer = null;
+// Ensure auto-fit happens at most once on initial load
+let initialAutoFitDone = false;
 
 function validCoordinates(event) {
   return Number.isFinite(Number(event?.latitude)) && Number.isFinite(Number(event?.longitude));
@@ -66,13 +77,21 @@ function renderMarkers() {
     bounds.extend(position);
   });
 
-  if (events.length > 1) map.setBounds(bounds, 48, 48, 48, 48);
-  else if (events.length === 1) map.setCenter(bounds.getSouthWest());
+  // Auto-fit only on initial load and only if not suppressed or user-interacted
+  if (!initialAutoFitDone && !userInteracted && !suppressAutoFit) {
+    if (events.length > 1) map.setBounds(bounds, 48, 48, 48, 48);
+    else if (events.length === 1) map.setCenter(bounds.getSouthWest());
+    initialAutoFitDone = true;
+  }
 }
 
 function focusSelectedEvent() {
   if (!map || !validCoordinates(props.selectedEvent)) return;
-  map.panTo(new window.kakao.maps.LatLng(Number(props.selectedEvent.latitude), Number(props.selectedEvent.longitude)));
+  // Programmatic focus: suppress auto-fit briefly while panning
+  clearTimeout(programmaticPanTimer);
+  suppressAutoFit = true;
+  try { map.panTo(new window.kakao.maps.LatLng(Number(props.selectedEvent.latitude), Number(props.selectedEvent.longitude))); } catch (e) {}
+  programmaticPanTimer = setTimeout(() => { suppressAutoFit = false; }, 800);
 }
 
 function updateSelectedMarker() {
@@ -80,6 +99,24 @@ function updateSelectedMarker() {
     marker.setZIndex(marker.eventId === props.selectedEventId ? 2 : 1);
   });
 }
+
+function panToCenter(center) {
+  if (!map || !center) return;
+  const lat = Number(center.latitude);
+  const lng = Number(center.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+  // suppress auto-fit while programmatically panning, then re-enable
+  clearTimeout(programmaticPanTimer);
+  suppressAutoFit = true;
+  try {
+    map.panTo(new window.kakao.maps.LatLng(lat, lng));
+  } catch (e) {
+    // ignore
+  }
+  programmaticPanTimer = setTimeout(() => { suppressAutoFit = false; }, 800);
+}
+
+defineExpose({ panToCenter });
 
 onMounted(async () => {
   try {
@@ -89,6 +126,31 @@ onMounted(async () => {
       map = new kakao.maps.Map(mapElement.value, {
         center: new kakao.maps.LatLng(37.5665, 126.978),
         level: 8,
+      });
+
+      // If parent provided an initial center, apply it
+      if (props.initialCenter && Number.isFinite(Number(props.initialCenter.latitude)) && Number.isFinite(Number(props.initialCenter.longitude))) {
+        map.setCenter(new kakao.maps.LatLng(Number(props.initialCenter.latitude), Number(props.initialCenter.longitude)));
+      }
+
+      // Mark user interaction when dragging or zooming so we avoid auto-centering
+      window.kakao.maps.event.addListener(map, "dragstart", () => { userInteracted = true; });
+      window.kakao.maps.event.addListener(map, "zoom_changed", () => { userInteracted = true; });
+
+      // Notify parent about center changes (throttled)
+      window.kakao.maps.event.addListener(map, "idle", () => {
+        try {
+          const center = map.getCenter();
+          const latitude = center.getLat();
+          const longitude = center.getLng();
+          const now = Date.now();
+          if (now - lastCenterEmit > 400) {
+            emit("center-changed", { latitude, longitude });
+            lastCenterEmit = now;
+          }
+        } catch (e) {
+          // ignore
+        }
       });
       renderMarkers();
     });
@@ -102,7 +164,25 @@ watch(() => props.selectedEventId, () => {
   updateSelectedMarker();
   focusSelectedEvent();
 });
+// When parent updates initial center, pan the map (but don't override user's manual view)
+watch(() => props.initialCenter, (val) => {
+  if (!map || !val) return;
+  if (userInteracted) return;
+  if (Number.isFinite(Number(val.latitude)) && Number.isFinite(Number(val.longitude))) {
+    map.panTo(new window.kakao.maps.LatLng(Number(val.latitude), Number(val.longitude)));
+  }
+}, { deep: true });
 onBeforeUnmount(clearMarkers);
+
+// clear listeners when unmounting
+onBeforeUnmount(() => {
+  if (map && window.kakao?.maps) {
+    try { window.kakao.maps.event.clearListeners(map, 'idle'); } catch (e) { /* ignore */ }
+    try { window.kakao.maps.event.clearListeners(map, 'dragstart'); } catch (e) { /* ignore */ }
+    try { window.kakao.maps.event.clearListeners(map, 'zoom_changed'); } catch (e) { /* ignore */ }
+  }
+  try { clearTimeout(programmaticPanTimer); } catch (e) {}
+});
 
 </script>
 

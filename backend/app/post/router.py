@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from backend.app.post import service as post_service
-from backend.app.post.schemas import (
+from app.post import service as post_service
+from app.post.schemas import (
     CommentCreate,
     CommentResponse,
     CommentUpdate,

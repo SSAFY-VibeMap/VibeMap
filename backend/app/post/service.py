@@ -19,20 +19,20 @@ from app.post.schemas import (
 
 def verify_password(saved_password: str, request_password: str) -> None:
     if saved_password != request_password:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="잘못된 패스워드입니다.")
 
 
 def get_post_or_404(db: Session, post_id: int) -> Post:
     post = db.get(Post, post_id)
     if post is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="게시글을 찾을 수 없습니다.")
     return post
 
 
 def get_comment_or_404(db: Session, post_id: int, comment_id: int) -> Comment:
     comment = db.get(Comment, comment_id)
     if comment is None or comment.post_id != post_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="댓글을 찾을 수 없습니다.")
     return comment
 
 
@@ -72,7 +72,7 @@ def list_posts(
 def get_post_detail(db: Session, post_id: int) -> Post:
     post = db.scalars(select(Post).options(selectinload(Post.comments)).where(Post.id == post_id)).first()
     if post is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="게시글을 찾을 수 없습니다.")
     return post
 
 

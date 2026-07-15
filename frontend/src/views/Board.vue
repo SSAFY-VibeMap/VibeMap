@@ -9,7 +9,6 @@ const samplePosts = [
     title: '불꽃축제 같이 볼 사람 모집',
     content: '여의도에서 함께 볼 분 구합니다.',
     meet_at: '2026-07-14T10:30',
-    region: 'seoul',
     comments: [{ id: 1, content: '저도 참여하고 싶어요!' }],
   },
 ];

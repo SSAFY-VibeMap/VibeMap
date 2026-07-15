@@ -14,7 +14,6 @@ defineProps({
         <p class="eyebrow">게시글 상세</p>
         <h2>{{ post.title }}</h2>
       </div>
-      <span class="tag">{{ post.region || 'seoul' }}</span>
     </header>
 
     <p class="detail-meta">{{ post.meet_at || '만남 일정 미정' }}</p>

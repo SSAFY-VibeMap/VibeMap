@@ -14,6 +14,17 @@ function formatDateTime(value, includeYear = false) {
   }).format(date);
 }
 
+function formatEventDate(value) {
+  if (!value || !/^\d{8}$/.test(String(value))) return '일정 미정';
+
+  const date = new Date(`${String(value).slice(0, 4)}-${String(value).slice(4, 6)}-${String(value).slice(6, 8)}T00:00:00`);
+  return new Intl.DateTimeFormat('ko-KR', { month: 'short', day: 'numeric' }).format(date);
+}
+
+function findEvent(events, contentId) {
+  return events.find((event) => String(event.id) === String(contentId));
+}
+
 defineProps({
   posts: {
     type: Array,
@@ -85,15 +96,17 @@ defineEmits(["select-post", "change-page"]);
 
         <div class="post-card-footer">
           <span
-            v-if="events.find((event) => event.id === post.content_id)"
+            v-if="findEvent(events, post.content_id)"
             class="post-card-tag"
           >
             {{
-              events.find((event) => event.id === post.content_id)
+              findEvent(events, post.content_id)
                 ?.venue_name || "장소 정보 없음"
             }}
           </span>
-          <span class="post-card-tag">{{ formatDateTime(post.meet_at) }} 만남</span>
+          <span v-if="findEvent(events, post.content_id)" class="post-card-tag">
+            축제 {{ formatEventDate(findEvent(events, post.content_id)?.eventstartdate) }} ~ {{ formatEventDate(findEvent(events, post.content_id)?.eventenddate) }}
+          </span>
           <span class="post-card-meta">{{ formatDateTime(post.created_at, true) }}</span>
         </div>
       </button>

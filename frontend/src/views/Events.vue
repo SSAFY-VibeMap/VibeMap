@@ -33,6 +33,7 @@ const posts = ref([
 ]);
 const loading = ref(true);
 const selectedEventId = ref(null);
+const selectedPostId = ref(null);
 const query = ref("");
 const currentPage = ref(1);
 const postsPerPage = 10;
@@ -72,7 +73,7 @@ function formatDate(value, withYear = false) {
 function selectEvent(event) { selectedEventId.value = event.id; }
 function changePage(page) { currentPage.value = Math.min(Math.max(page, 1), pageCount.value); }
 function viewEvent(event) { eventDetail.value = event; }
-function openDetail(post) { detailPost.value = post; if (post.content_id) selectedEventId.value = post.content_id; }
+function openDetail(post) { detailPost.value = post; selectedPostId.value = post.id; if (post.content_id) selectedEventId.value = post.content_id; }
 function openForm(post = null) {
   editPost.value = post;
   Object.assign(form, { title: post?.title ?? "", content: post?.content ?? "", content_id: post?.content_id ?? selectedEventId.value ?? "", meet_at: post?.meet_at?.slice(0, 16) ?? "", password: "" });
@@ -131,7 +132,7 @@ onBeforeUnmount(() => { window.removeEventListener("vibemap-search", receiveSear
         </div>
         <MapView :markers="filteredEvents" :selected-event-id="selectedEventId" :selected-event="selectedEvent" :on-select-event="selectEvent" :on-view-event="viewEvent" />
       </section>
-      <EventPanel :posts="pagedPosts" :events="events" :loading="loading" :active-event-id="selectedEventId" :page="currentPage" :page-count="pageCount" :total="filteredPosts.length" @select-post="openDetail" @change-page="changePage" />
+      <EventPanel :posts="pagedPosts" :events="events" :loading="loading" :active-post-id="selectedPostId" :page="currentPage" :page-count="pageCount" :total="filteredPosts.length" @select-post="openDetail" @change-page="changePage" />
     </div>
 
     <div v-if="eventDetail" class="modal-backdrop" @click.self="eventDetail = null"><article class="modal-card event-detail-modal"><button class="modal-close" type="button" aria-label="닫기" @click="eventDetail = null"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg></button><img :src="eventDetail.image_url" :alt="eventDetail.title" class="event-detail-image" /><p class="eyebrow">서울 행사</p><h2>{{ eventDetail.title }}</h2><p class="event-detail-place">📍 {{ eventDetail.venue_name }} · {{ eventDetail.venue_address }}</p><div class="modal-footer"><button class="button button-primary" type="button" @click="selectEvent(eventDetail); eventDetail = null; openForm()">이 행사로 모집 글쓰기</button></div></article></div>

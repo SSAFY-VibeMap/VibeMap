@@ -12,8 +12,8 @@ defineProps({
     type: Boolean,
     default: false,
   },
-  activeEventId: {
-    type: String,
+  activePostId: {
+    type: [String, Number],
     default: null,
   },
   page: {
@@ -55,7 +55,7 @@ defineEmits(["select-post", "change-page"]);
         type="button"
         class="post-card"
         :class="{
-          'post-card-active': post.content_id === activeEventId,
+          'post-card-active': post.id === activePostId,
         }"
         @click="$emit('select-post', post)"
       >

@@ -16,6 +16,8 @@ const fallbackEvents = [
 ];
 
 const events = ref([]);
+const mapRef = ref(null);
+const userLocation = ref({ latitude: 37.5665, longitude: 126.978 });
 const posts = ref([
   { id: 1, title: "불빛축제 같이 보러갈 사람 모집", content: "여의도에서 불빛축제 보고 푸드트럭까지 함께 갈 2명 구합니다!여의도에서 불빛축제 보고 푸드트럭까지 함께 갈 2명 구합니다!여의도에서 불빛축제 보고 푸드트럭까지 함께 갈 2명 구합니다!여의도에서 불빛축제 보고 푸드트럭까지 함께 갈 2명 구합니다!여의도에서 불빛축제 보고 푸드트럭까지 함께 갈 2명 구합니다!", content_id: "125678", meet_at: "2026-07-19T18:00", created_at: "2026-07-14T10:30", comments: [{ id: 1, content: "저도 참여하고 싶어요!", created_at: "2026-07-14T11:00" }], password: "1234" },
   { id: 2, title: "서울숲 재즈 페스티벌 동행 구해요", content: "재즈 좋아하시는 분, 돗자리와 간단한 간식 챙겨 함께 즐겨요.", content_id: "125679", meet_at: "2026-07-20T15:00", created_at: "2026-07-13T09:00", comments: [], password: "1234" },
@@ -156,6 +158,29 @@ async function loadPosts(page = currentPage.value) {
     postsLoading.value = false;
   }
 }
+// Load events for a given center (latitude, longitude)
+async function loadEventsForCenter(lat, lng) {
+  loading.value = true;
+  try {
+    const response = await eventService.getEvents({ latitude: lat, longitude: lng, limit: 50, region: 'seoul' });
+    events.value = response?.data?.length ? response.data : fallbackEvents;
+  } catch {
+    events.value = fallbackEvents;
+  } finally {
+    loading.value = false;
+  }
+}
+
+// Handle map center changes (debounced)
+let centerTimeout = null;
+function onMapCenterChanged(payload) {
+  clearTimeout(centerTimeout);
+  centerTimeout = setTimeout(() => {
+    if (!payload) return;
+    const { latitude, longitude } = payload;
+    loadEventsForCenter(latitude, longitude);
+  }, 400);
+}
 async function changePage(page) {
   const nextPage = Math.min(Math.max(page, 1), postPageCount.value);
   if (nextPage !== currentPage.value) await loadPosts(nextPage);
@@ -279,11 +304,27 @@ onMounted(async () => {
   window.addEventListener("vibemap-search", receiveSearch);
   window.addEventListener("vibemap-create-post", receiveCreate);
   try {
-    const response = await eventService.getEvents({ latitude: 37.5665, longitude: 126.978, limit: 50, region: "seoul" });
-    events.value = response?.data?.length ? response.data : fallbackEvents;
-  } catch { events.value = fallbackEvents; }
-  finally { loading.value = false; }
-  await loadPosts(1);
+    // Try to get user's current position (timeout/fallback quickly)
+    await new Promise((resolve) => {
+      if (!navigator.geolocation) return resolve();
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          userLocation.value = { latitude, longitude };
+          resolve();
+        },
+        () => resolve(),
+        { timeout: 5000 }
+      );
+    });
+  } finally {
+    // Load events for the obtained (or fallback) location
+    await loadEventsForCenter(userLocation.value.latitude, userLocation.value.longitude);
+    // Force map to pan to user's location (call exposed child method)
+    try { mapRef.value?.panToCenter?.(userLocation.value); } catch (e) { /* ignore */ }
+    loading.value = false;
+    await loadPosts(1);
+  }
 });
 onBeforeUnmount(() => { window.removeEventListener("vibemap-search", receiveSearch); window.removeEventListener("vibemap-create-post", receiveCreate); });
 </script>
@@ -296,7 +337,16 @@ onBeforeUnmount(() => { window.removeEventListener("vibemap-search", receiveSear
           <div class="section-head-title"><span class="section-pin" aria-hidden="true">●</span><h1>서울 행사 지도</h1></div>
           <span class="section-badge">{{ filteredEvents.length }}개 행사</span>
         </div>
-        <MapView :markers="filteredEvents" :selected-event-id="selectedEventId" :selected-event="selectedEvent" :on-select-event="selectEvent" :on-view-event="viewEvent" />
+        <MapView
+          :markers="filteredEvents"
+          :selected-event-id="selectedEventId"
+          :selected-event="selectedEvent"
+          :on-select-event="selectEvent"
+          :on-view-event="viewEvent"
+            ref="mapRef"
+            :initial-center="userLocation"
+            @center-changed="onMapCenterChanged"
+        />
       </section>
       <EventPanel :posts="posts" :events="events" :loading="postsLoading" :active-post-id="selectedPostId" :page="currentPage" :page-count="postPageCount" :total="postTotal" @select-post="openDetail" @change-page="changePage" />
     </div>

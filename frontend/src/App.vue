@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { RouterLink, RouterView } from "vue-router";
+import { Toaster } from "vue-sonner";
 
 const keyword = ref("");
 function search() {
@@ -79,6 +80,11 @@ function createPost() {
     <main class="app-main">
       <RouterView />
     </main>
-
+    <Toaster
+      position="top-right"
+      rich-colors
+      :expand="true"
+      :duration="3000"
+    />
   </div>
 </template>

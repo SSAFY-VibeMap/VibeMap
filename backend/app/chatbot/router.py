@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from backend.app.chatbot.schemas import ChatRequest, ChatResponse
-from backend.app.chatbot.service import ChatService
+from app.chatbot.schemas import ChatRequest, ChatResponse
+from app.chatbot.service import ChatService
 
 router = APIRouter(prefix="/api/chat", tags=["chatbot"])
 chat_service = ChatService()

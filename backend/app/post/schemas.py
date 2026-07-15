@@ -33,7 +33,6 @@ class PostCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     content: str = Field(..., min_length=1)
     password: str = Field(..., min_length=1, max_length=255)
-    region: str = Field("seoul", min_length=1, max_length=50)
     content_id: str | None = Field(None, max_length=100)
     meet_at: datetime | None = None
 
@@ -42,7 +41,6 @@ class PostUpdate(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     content: str = Field(..., min_length=1)
     password: str = Field(..., min_length=1, max_length=255)
-    region: str | None = Field(None, min_length=1, max_length=50)
     content_id: str | None = Field(None, max_length=100)
     meet_at: datetime | None = None
 
@@ -51,7 +49,6 @@ class PostSummary(BaseModel):
     id: int
     title: str
     content: str
-    region: str
     content_id: str | None = None
     meet_at: datetime | None = None
     created_at: datetime

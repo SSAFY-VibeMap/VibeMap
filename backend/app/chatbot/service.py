@@ -12,7 +12,7 @@ class ChatService:
 
     def generate_reply(self, request: ChatRequest) -> ChatResponse:
         try:
-            reply = self.openai_service.generate_response(request.message, request.region)
+            reply = self.openai_service.generate_response(request.message)
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
 

@@ -15,7 +15,6 @@ class Post(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
-    region: Mapped[str] = mapped_column(String(50), nullable=False, default="seoul")
     content_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     meet_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

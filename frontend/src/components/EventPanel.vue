@@ -1,4 +1,19 @@
 <script setup>
+function formatDateTime(value, includeYear = false) {
+  if (!value) return "일정 미정";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return new Intl.DateTimeFormat("ko-KR", {
+    ...(includeYear ? { year: "numeric" } : {}),
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+}
+
 defineProps({
   posts: {
     type: Array,
@@ -78,8 +93,8 @@ defineEmits(["select-post", "change-page"]);
                 ?.venue_name || "장소 정보 없음"
             }}
           </span>
-          <span class="post-card-tag">{{ post.meet_at }} 만남</span>
-          <span class="post-card-meta">{{ post.created_at }}</span>
+          <span class="post-card-tag">{{ formatDateTime(post.meet_at) }} 만남</span>
+          <span class="post-card-meta">{{ formatDateTime(post.created_at, true) }}</span>
         </div>
       </button>
     </div>

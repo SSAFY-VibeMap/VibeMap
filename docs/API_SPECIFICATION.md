@@ -30,7 +30,6 @@ CREATE TABLE posts (
   title VARCHAR(255) NOT NULL,
   content TEXT NOT NULL,
   password VARCHAR(255) NOT NULL,
-  region VARCHAR(50) DEFAULT 'seoul',
   content_id VARCHAR(100),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -45,7 +44,6 @@ CREATE TABLE posts (
 | title | VARCHAR(255) | 게시물 제목 |
 | content | TEXT | 게시물 내용 |
 | password | VARCHAR(255) | 수정/삭제 비밀번호 |
-| region | VARCHAR(50) | 지역 코드 |
 | content_id | VARCHAR(100) | 연결된 축제 JSON 원본 ID |
 | created_at | DATETIME | 작성 일시 |
 | updated_at | DATETIME | 수정 일시 |
@@ -553,9 +551,9 @@ export const eventService = {
 import apiClient from './apiClient';
 
 export const postService = {
-  getPosts: (page = 1, limit = 10, region = 'seoul') =>
+  getPosts: (page = 1, limit = 10) =>
     apiClient.get('/api/posts', {
-      params: { page, limit, region }
+      params: { page, limit }
     }),
 
   getPost: (id) =>
@@ -597,10 +595,9 @@ export const commentService = {
 import apiClient from './apiClient';
 
 export const chatService = {
-  sendMessage: (message, region) =>
+  sendMessage: (message) =>
     apiClient.post('/api/chat', {
-      message,
-      region
+      message
     })
 };
 ```

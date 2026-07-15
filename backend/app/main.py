@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 
-from backend.app.chatbot.router import router as chatbot_router
-from backend.app.database import Base, engine
-from backend.app.post.router import router as post_router
+from app.chatbot.router import router as chatbot_router
+from app.database import Base, engine
+from app.post.router import router as post_router
 
 app = FastAPI(title="VibeMap Backend")
 Base.metadata.create_all(bind=engine)

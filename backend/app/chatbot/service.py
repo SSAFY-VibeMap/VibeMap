@@ -2,8 +2,8 @@ from uuid import uuid4
 
 from fastapi import HTTPException
 
-from backend.app.chatbot.openai_service import OpenAIService
-from backend.app.chatbot.schemas import ChatRequest, ChatResponse
+from app.chatbot.openai_service import OpenAIService
+from app.chatbot.schemas import ChatRequest, ChatResponse
 
 
 class ChatService:

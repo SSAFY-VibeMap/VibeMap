@@ -13,7 +13,7 @@ const fallbackEvents = [
 
 const events = ref([]);
 const posts = ref([
-  { id: 1, title: "불빛축제 같이 보러갈 사람 모집", content: "여의도에서 불빛축제 보고 푸드트럭까지 함께 갈 2명 구합니다!", content_id: "125678", meet_at: "2026-07-19T18:00", created_at: "2026-07-14T10:30", comments: [{ id: 1, content: "저도 참여하고 싶어요!", created_at: "2026-07-14T11:00" }], password: "1234" },
+  { id: 1, title: "불빛축제 같이 보러갈 사람 모집", content: "여의도에서 불빛축제 보고 푸드트럭까지 함께 갈 2명 구합니다!여의도에서 불빛축제 보고 푸드트럭까지 함께 갈 2명 구합니다!여의도에서 불빛축제 보고 푸드트럭까지 함께 갈 2명 구합니다!여의도에서 불빛축제 보고 푸드트럭까지 함께 갈 2명 구합니다!여의도에서 불빛축제 보고 푸드트럭까지 함께 갈 2명 구합니다!", content_id: "125678", meet_at: "2026-07-19T18:00", created_at: "2026-07-14T10:30", comments: [{ id: 1, content: "저도 참여하고 싶어요!", created_at: "2026-07-14T11:00" }], password: "1234" },
   { id: 2, title: "서울숲 재즈 페스티벌 동행 구해요", content: "재즈 좋아하시는 분, 돗자리와 간단한 간식 챙겨 함께 즐겨요.", content_id: "125679", meet_at: "2026-07-20T15:00", created_at: "2026-07-13T09:00", comments: [], password: "1234" },
   { id: 3, title: "광화문 빛초롱축제 야경 같이 보다", content: "사진 찍는 걸 좋아하는 분이면 더 환영합니다.", content_id: "125680", meet_at: "2026-07-21T19:30", created_at: "2026-07-12T20:15", comments: [{ id: 2, content: "카메라 초보인데 괜찮을까요?", created_at: "2026-07-12T21:00" }], password: "1234" },
   ...Array.from({ length: 10 }, (_, index) => {
@@ -44,6 +44,9 @@ const editPost = ref(null);
 const deleteOpen = ref(false);
 const password = ref("");
 const form = reactive({ title: "", content: "", content_id: "", meet_at: "", password: "" });
+const schedulePickerOpen = ref(false);
+const schedulePickerMonth = ref(new Date());
+const schedulePickerStyle = ref({});
 const comment = reactive({ content: "", password: "" });
 const chatOpen = ref(false);
 const chatInput = ref("");
@@ -70,6 +73,63 @@ function formatDate(value, withYear = false) {
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat("ko-KR", withYear ? { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" } : { month: "long", day: "numeric" }).format(date);
 }
+function toDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+function getScheduleDate(value) {
+  if (!value) return null;
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+const scheduleDays = computed(() => {
+  const year = schedulePickerMonth.value.getFullYear();
+  const month = schedulePickerMonth.value.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const start = new Date(year, month, 1 - firstDay.getDay());
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    return { date, key: toDateKey(date), currentMonth: date.getMonth() === month };
+  });
+});
+const scheduleTime = computed({
+  get: () => form.meet_at?.slice(11, 16) || "",
+  set: (time) => {
+    const date = form.meet_at?.slice(0, 10) || toDateKey(new Date());
+    form.meet_at = `${date}T${time}`;
+  },
+});
+const scheduleTimes = Array.from({ length: 48 }, (_, index) => {
+  const hour = String(Math.floor(index / 2)).padStart(2, "0");
+  const minute = index % 2 ? "30" : "00";
+  return `${hour}:${minute}`;
+});
+const scheduleMonthLabel = computed(() => new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long" }).format(schedulePickerMonth.value));
+function changeScheduleMonth(amount) {
+  schedulePickerMonth.value = new Date(schedulePickerMonth.value.getFullYear(), schedulePickerMonth.value.getMonth() + amount, 1);
+}
+function selectScheduleDate(date) {
+  form.meet_at = `${toDateKey(date)}T${scheduleTime.value || "18:00"}`;
+  schedulePickerOpen.value = false;
+}
+function openSchedulePicker(event) {
+  const selected = getScheduleDate(form.meet_at) || new Date();
+  schedulePickerMonth.value = new Date(selected.getFullYear(), selected.getMonth(), 1);
+  schedulePickerOpen.value = !schedulePickerOpen.value;
+  if (!schedulePickerOpen.value) return;
+
+  const rect = event.currentTarget.getBoundingClientRect();
+  const pickerWidth = 320;
+  const pickerHeight = 390;
+  const left = Math.min(rect.left, window.innerWidth - pickerWidth - 16);
+  const top = rect.bottom + 8 + pickerHeight > window.innerHeight
+    ? Math.max(16, rect.top - pickerHeight - 8)
+    : rect.bottom + 8;
+  schedulePickerStyle.value = { top: `${top}px`, left: `${Math.max(16, left)}px` };
+}
 function selectEvent(event) { selectedEventId.value = event.id; }
 function changePage(page) { currentPage.value = Math.min(Math.max(page, 1), pageCount.value); }
 function viewEvent(event) { eventDetail.value = event; }
@@ -77,6 +137,7 @@ function openDetail(post) { detailPost.value = post; selectedPostId.value = post
 function openForm(post = null) {
   editPost.value = post;
   Object.assign(form, { title: post?.title ?? "", content: post?.content ?? "", content_id: post?.content_id ?? selectedEventId.value ?? "", meet_at: post?.meet_at?.slice(0, 16) ?? "", password: "" });
+  schedulePickerOpen.value = false;
   formOpen.value = true;
 }
 function savePost() {
@@ -151,7 +212,7 @@ onBeforeUnmount(() => { window.removeEventListener("vibemap-search", receiveSear
       </article>
     </div>
 
-    <div v-if="formOpen" class="modal-backdrop" @click.self="formOpen = false"><form class="modal-card form-modal" @submit.prevent="savePost"><button class="modal-close" type="button" aria-label="닫기" @click="formOpen = false"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg></button><h2>{{ editPost ? '게시글 수정' : '함께 갈 사람 모집' }}</h2><p class="muted">축제를 함께 즐길 동행을 모집하는 글을 작성해 보세요.</p><label>제목<input v-model="form.title" placeholder="예: 불빛축제 같이 보러갈 사람 모집" /></label><label v-if="!editPost">연결된 축제<select v-model="form.content_id"><option value="">연결 안 함</option><option v-for="event in events" :key="event.id" :value="event.id">{{ event.title }}</option></select></label><label>내용<textarea v-model="form.content" rows="4" placeholder="모집 인원, 만날 장소, 준비물을 적어주세요."></textarea></label><label>만남 일정<input v-model="form.meet_at" type="datetime-local" /></label><label>비밀번호<input v-model="form.password" type="password" placeholder="수정/삭제 때 사용할 비밀번호" /></label><div class="modal-footer"><button class="button button-secondary" type="button" @click="formOpen = false">취소</button><button class="button button-primary" type="submit">{{ editPost ? '수정하기' : '등록하기' }}</button></div></form></div>
+    <div v-if="formOpen" class="modal-backdrop" @click.self="formOpen = false"><form class="modal-card form-modal" @submit.prevent="savePost"><button class="modal-close" type="button" aria-label="닫기" @click="formOpen = false"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg></button><h2>{{ editPost ? '게시글 수정' : '함께 갈 사람 모집' }}</h2><p class="muted">축제를 함께 즐길 동행을 모집하는 글을 작성해 보세요.</p><label>제목<input v-model="form.title" placeholder="예: 불빛축제 같이 보러갈 사람 모집" /></label><label v-if="!editPost">연결된 축제<select v-model="form.content_id"><option value="">연결 안 함</option><option v-for="event in events" :key="event.id" :value="event.id">{{ event.title }}</option></select></label><label>내용<textarea v-model="form.content" rows="4" placeholder="모집 인원, 만날 장소, 준비물을 적어주세요."></textarea></label><label>만남 일정<div class="schedule-picker"><button type="button" class="schedule-trigger" :class="{ 'schedule-trigger-empty': !form.meet_at }" @click="openSchedulePicker"><span>🗓</span>{{ form.meet_at ? formatDate(form.meet_at, true) : '날짜와 시간을 선택하세요' }}</button><div v-if="schedulePickerOpen" class="schedule-popover"><div class="schedule-calendar-head"><button type="button" aria-label="이전 달" @click="changeScheduleMonth(-1)">‹</button><strong>{{ scheduleMonthLabel }}</strong><button type="button" aria-label="다음 달" @click="changeScheduleMonth(1)">›</button></div><div class="schedule-weekdays"><span v-for="day in ['일', '월', '화', '수', '목', '금', '토']" :key="day">{{ day }}</span></div><div class="schedule-days"><button v-for="day in scheduleDays" :key="day.key" type="button" :class="{ muted: !day.currentMonth, selected: form.meet_at?.startsWith(day.key), today: day.key === toDateKey(new Date()) }" @click="selectScheduleDate(day.date)">{{ day.date.getDate() }}</button></div><label class="schedule-time">시간<select v-model="scheduleTime"><option value="" disabled>시간 선택</option><option v-for="time in scheduleTimes" :key="time" :value="time">{{ time }}</option></select></label></div></div></label><label>비밀번호<input v-model="form.password" type="password" placeholder="수정/삭제 때 사용할 비밀번호" /></label><div class="modal-footer"><button class="button button-secondary" type="button" @click="formOpen = false">취소</button><button class="button button-primary" type="submit">{{ editPost ? '수정하기' : '등록하기' }}</button></div></form></div>
 
     <div v-if="deleteOpen" class="modal-backdrop" @click.self="deleteOpen = false"><form class="modal-card password-modal" @submit.prevent="deletePost"><h2>게시글 삭제</h2><p class="muted">작성할 때 입력한 비밀번호를 입력하세요.</p><input v-model="password" type="password" autofocus placeholder="비밀번호" /><div class="modal-footer"><button class="button button-secondary" type="button" @click="deleteOpen = false">취소</button><button class="button button-danger" type="submit">삭제</button></div></form></div>
 

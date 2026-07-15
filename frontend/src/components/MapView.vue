@@ -60,6 +60,7 @@ function renderMarkers() {
       title: event.title,
       zIndex: event.id === props.selectedEventId ? 2 : 1,
     });
+    marker.eventId = event.id;
     window.kakao.maps.event.addListener(marker, "click", () => props.onSelectEvent?.(event));
     kakaoMarkers.push(marker);
     bounds.extend(position);
@@ -67,6 +68,17 @@ function renderMarkers() {
 
   if (events.length > 1) map.setBounds(bounds, 48, 48, 48, 48);
   else if (events.length === 1) map.setCenter(bounds.getSouthWest());
+}
+
+function focusSelectedEvent() {
+  if (!map || !validCoordinates(props.selectedEvent)) return;
+  map.panTo(new window.kakao.maps.LatLng(Number(props.selectedEvent.latitude), Number(props.selectedEvent.longitude)));
+}
+
+function updateSelectedMarker() {
+  kakaoMarkers.forEach((marker) => {
+    marker.setZIndex(marker.eventId === props.selectedEventId ? 2 : 1);
+  });
 }
 
 onMounted(async () => {
@@ -86,6 +98,10 @@ onMounted(async () => {
 });
 
 watch(() => props.markers, renderMarkers, { deep: true });
+watch(() => props.selectedEventId, () => {
+  updateSelectedMarker();
+  focusSelectedEvent();
+});
 onBeforeUnmount(clearMarkers);
 
 </script>

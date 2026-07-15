@@ -131,7 +131,9 @@ GET /api/events
       "venue_name": "여의도 한강공원",
       "venue_address": "서울 영등포구 여의동로 330",
       "latitude": 37.5281,
-      "longitude": 126.9346
+      "longitude": 126.9346,
+      "eventstartdate": "20260916",
+      "eventenddate": "20260920"
     }
   ],
   "total_page": 8,
@@ -170,7 +172,9 @@ GET /api/events/{id}
   "venue_name": "여의도 한강공원",
   "venue_address": "서울 영등포구 여의동로 330",
   "latitude": 37.5281,
-  "longitude": 126.9346
+  "longitude": 126.9346,
+  "eventstartdate": "20260916",
+  "eventenddate": "20260920"
 }
 ```
 

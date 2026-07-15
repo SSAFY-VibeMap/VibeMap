@@ -102,7 +102,7 @@ function updateSelectedMarker() {
 
 function panToCenter(center) {
   if (!map || !center) return;
-  const lat = Number(center.latitude);
+  const lat = Number(center.latitude);  
   const lng = Number(center.longitude);
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
   // suppress auto-fit while programmatically panning, then re-enable
@@ -125,7 +125,7 @@ onMounted(async () => {
       await nextTick();
       map = new kakao.maps.Map(mapElement.value, {
         center: new kakao.maps.LatLng(37.5665, 126.978),
-        level: 8,
+        level: 6,
       });
 
       // If parent provided an initial center, apply it

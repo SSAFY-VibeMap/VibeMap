@@ -2,7 +2,7 @@ from typing import Optional
 from fastapi import APIRouter, Query, HTTPException
 from .service import EventService
 
-router = APIRouter()
+router = APIRouter(prefix="/api/events", tags=["event"])
 
 @router.get("")
 def list_events(

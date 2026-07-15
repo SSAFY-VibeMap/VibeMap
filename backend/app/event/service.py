@@ -13,11 +13,7 @@ class EventService:
     def _load_region_file(self, region: str):
         # Try multiple strategies to locate region JSON (support en/kr names and nested folders)
         candidates = []
-        # direct file in data dir
-        candidates.append(self.data_dir / f"{region}_축제공연행사.json")
-        # special mapping for seoul -> 서울
-        if region.lower() == "seoul":
-            candidates.append(self.data_dir / "서울_축제공연행사.json")
+        candidates.append(self.data_dir / "서울_축제공연행사.json")
         # nested folder: data/<region>/*.json
         nested_dir = self.data_dir / region
         if nested_dir.exists() and nested_dir.is_dir():
@@ -28,7 +24,11 @@ class EventService:
             if c.exists():
                 try:
                     with open(c, encoding="utf-8") as f:
-                        return json.load(f)
+                        data = json.load(f)
+                        # unwrap common wrapper that contains items list
+                        if isinstance(data, dict) and "items" in data and isinstance(data["items"], list):
+                            return data["items"]
+                        return data
                 except Exception:
                     continue
 
@@ -67,19 +67,34 @@ class EventService:
                 return None
 
         filtered = []
+        # if file contained a top-level object, ensure we iterate the list of events
+        if isinstance(items, dict) and "items" in items:
+            items = items.get("items") or []
+
         for ev in items:
             if not match(ev):
                 continue
-            lat = ev.get("latitude") or ev.get("lat")
-            lon = ev.get("longitude") or ev.get("lng") or ev.get("lon")
+            # id candidates: several source files use different keys
+            id_val = ev.get("id") or ev.get("contentid") or ev.get("content_id") or ev.get("event_id")
+
+            # coordinate candidates: mapy=latitude, mapx=longitude in provided JSON
+            lat = ev.get("latitude") or ev.get("lat") or ev.get("mapy") or ev.get("map_y")
+            lon = ev.get("longitude") or ev.get("lng") or ev.get("lon") or ev.get("mapx") or ev.get("map_x")
             lat_f = _safe_float(lat)
             lon_f = _safe_float(lon)
+
+            # image fields in source data
+            image = ev.get("image_url") or ev.get("firstimage") or ev.get("firstimage2")
+
+            # address fields
+            addr = ev.get("venue_address") or ev.get("addr") or ev.get("addr1")
+
             filtered.append({
-                "id": str(ev.get("id") or ev.get("content_id") or ev.get("event_id") or ""),
+                "id": str(id_val or ""),
                 "title": ev.get("title"),
-                "image_url": ev.get("image_url"),
-                "venue_name": ev.get("venue_name") or ev.get("place"),
-                "venue_address": ev.get("venue_address") or ev.get("addr"),
+                "image_url": image,
+                "venue_name": ev.get("venue_name") or ev.get("place") or ev.get("title"),
+                "venue_address": addr,
                 "latitude": lat_f,
                 "longitude": lon_f,
             })
@@ -127,19 +142,39 @@ class EventService:
         for p in self.data_dir.rglob("*.json"):
             try:
                 with open(p, encoding="utf-8") as f:
-                    arr = json.load(f)
+                    raw = json.load(f)
             except Exception:
                 continue
+            # normalize to a list of event dicts
+            if isinstance(raw, dict):
+                if "items" in raw and isinstance(raw["items"], list):
+                    arr = raw["items"]
+                else:
+                    arr = [raw]
+            elif isinstance(raw, list):
+                arr = raw
+            else:
+                # unexpected type -> skip
+                arr = []
+
             for ev in arr:
-                if str(ev.get("id") or ev.get("content_id") or ev.get("event_id")) == str(event_id):
+                # support multiple id key names
+                ev_id = ev.get("id") or ev.get("contentid") or ev.get("content_id") or ev.get("event_id")
+                if str(ev_id) == str(event_id):
+                    # normalize returned fields
+                    id_val = ev_id
+                    image = ev.get("image_url") or ev.get("firstimage") or ev.get("firstimage2")
+                    addr = ev.get("venue_address") or ev.get("addr") or ev.get("addr1")
+                    lat = ev.get("latitude") or ev.get("lat") or ev.get("mapy")
+                    lon = ev.get("longitude") or ev.get("lng") or ev.get("lon") or ev.get("mapx")
                     return {
-                        "id": str(ev.get("id") or ev.get("content_id") or ev.get("event_id") or ""),
+                        "id": str(id_val or ""),
                         "title": ev.get("title"),
-                        "image_url": ev.get("image_url"),
-                        "venue_name": ev.get("venue_name") or ev.get("place"),
-                        "venue_address": ev.get("venue_address") or ev.get("addr"),
-                        "latitude": ev.get("latitude") or ev.get("lat"),
-                        "longitude": ev.get("longitude") or ev.get("lng") or ev.get("lon"),
+                        "image_url": image,
+                        "venue_name": ev.get("venue_name") or ev.get("place") or ev.get("title"),
+                        "venue_address": addr,
+                        "latitude": lat,
+                        "longitude": lon,
                         **{k: v for k, v in ev.items() if k not in ["id", "title"]},
                     }
         return None

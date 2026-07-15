@@ -485,7 +485,8 @@ textarea:focus {
 .post-card,
 .event-card {
   display: grid;
-  gap: 0.75rem;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0.25rem;
   min-height: 9.25rem;
   padding: 1.25rem 1.3rem;
   border: 1px solid var(--border);
@@ -535,8 +536,13 @@ textarea:focus {
   margin: 0;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  max-height: 1.5rem;
   overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  line-height: 1.5;
   font-size: 0.95rem;
 }
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
-
 from app.database import get_db
 from app.post import service as post_service
 from app.post.schemas import (

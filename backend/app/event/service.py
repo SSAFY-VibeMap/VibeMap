@@ -89,6 +89,9 @@ class EventService:
             # address fields
             addr = ev.get("venue_address") or ev.get("addr") or ev.get("addr1")
 
+            start_raw = ev.get("eventstartdate") or ev.get("startdate") or ev.get("event_start_date") or ev.get("start_date")
+            end_raw = ev.get("eventenddate") or ev.get("enddate") or ev.get("event_end_date") or ev.get("end_date")
+
             filtered.append({
                 "id": str(id_val or ""),
                 "title": ev.get("title"),
@@ -97,6 +100,8 @@ class EventService:
                 "venue_address": addr,
                 "latitude": lat_f,
                 "longitude": lon_f,
+                "eventstartdate": str(start_raw) if start_raw not in (None, "") else None,
+                "eventenddate": str(end_raw) if end_raw not in (None, "") else None,
             })
 
         # If latitude/longitude provided, compute haversine distance and sort by it
@@ -167,6 +172,10 @@ class EventService:
                     addr = ev.get("venue_address") or ev.get("addr") or ev.get("addr1")
                     lat = ev.get("latitude") or ev.get("lat") or ev.get("mapy")
                     lon = ev.get("longitude") or ev.get("lng") or ev.get("lon") or ev.get("mapx")
+                    
+                    start_raw = ev.get("eventstartdate") or ev.get("startdate") or ev.get("event_start_date") or ev.get("start_date")
+                    end_raw = ev.get("eventenddate") or ev.get("enddate") or ev.get("event_end_date") or ev.get("end_date")
+                    
                     return {
                         "id": str(id_val or ""),
                         "title": ev.get("title"),
@@ -175,6 +184,7 @@ class EventService:
                         "venue_address": addr,
                         "latitude": lat,
                         "longitude": lon,
-                        **{k: v for k, v in ev.items() if k not in ["id", "title"]},
+                        "eventstartdate": str(start_raw) if start_raw not in (None, "") else None,
+                        "eventenddate": str(end_raw) if end_raw not in (None, "") else None,                   
                     }
         return None

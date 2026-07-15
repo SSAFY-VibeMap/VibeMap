@@ -3,6 +3,10 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import EventPanel from "../components/EventPanel.vue";
 import MapView from "../components/MapView.vue";
 import { eventService } from "../services/eventService";
+import { postService } from "../services/postService";
+import { commentService } from "../services/commentService";
+import { chatService } from "../services/chatService";
+import { beginChatSession, buildChatContext, loadChatHistory, saveChatHistory } from "../services/chatHistory";
 
 const fallbackEvents = [
   { id: "125678", title: "여의도 한강 불빛축제", image_url: "https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=800&q=80", venue_name: "여의도 한강공원", venue_address: "서울 영등포구 여의동로 330", latitude: 37.5281, longitude: 126.9346 },
@@ -32,11 +36,14 @@ const posts = ref([
   }),
 ]);
 const loading = ref(true);
+const postsLoading = ref(true);
 const selectedEventId = ref(null);
 const selectedPostId = ref(null);
 const query = ref("");
 const currentPage = ref(1);
 const postsPerPage = 10;
+const postTotal = ref(0);
+const postPageCount = ref(1);
 const detailPost = ref(null);
 const eventDetail = ref(null);
 const formOpen = ref(false);
@@ -48,9 +55,11 @@ const schedulePickerOpen = ref(false);
 const schedulePickerMonth = ref(new Date());
 const schedulePickerStyle = ref({});
 const comment = reactive({ content: "", password: "" });
+const commentEdit = reactive({ id: null, content: "", password: "" });
 const chatOpen = ref(false);
 const chatInput = ref("");
 const messages = ref([{ id: "welcome", role: "bot", text: "안녕하세요! 서울 축제 도우미예요. 궁금한 행사나 지역을 물어보세요." }]);
+const chatLoading = ref(false);
 
 const filteredEvents = computed(() => {
   const keyword = query.value.trim().toLowerCase();
@@ -131,47 +140,142 @@ function openSchedulePicker(event) {
   schedulePickerStyle.value = { top: `${top}px`, left: `${Math.max(16, left)}px` };
 }
 function selectEvent(event) { selectedEventId.value = event.id; }
-function changePage(page) { currentPage.value = Math.min(Math.max(page, 1), pageCount.value); }
-function viewEvent(event) { eventDetail.value = event; }
-function openDetail(post) { detailPost.value = post; selectedPostId.value = post.id; if (post.content_id) selectedEventId.value = post.content_id; }
+async function loadPosts(page = currentPage.value) {
+  postsLoading.value = true;
+  try {
+    const response = await postService.getPosts({ page, limit: postsPerPage, keyword: query.value.trim() || undefined, latitude: 37.5665, longitude: 126.978 });
+    posts.value = response?.data || [];
+    currentPage.value = response?.page || page;
+    postPageCount.value = response?.total_page || 1;
+    postTotal.value = response?.total ?? posts.value.length;
+  } catch {
+    posts.value = [];
+    postTotal.value = 0;
+    postPageCount.value = 1;
+  } finally {
+    postsLoading.value = false;
+  }
+}
+async function changePage(page) {
+  const nextPage = Math.min(Math.max(page, 1), postPageCount.value);
+  if (nextPage !== currentPage.value) await loadPosts(nextPage);
+}
+async function viewEvent(event) {
+  try { eventDetail.value = await eventService.getEvent(event.id); }
+  catch { eventDetail.value = event; }
+}
+async function openDetail(post) {
+  selectedPostId.value = post.id;
+  if (post.content_id) selectedEventId.value = post.content_id;
+  try { detailPost.value = await postService.getPost(post.id); }
+  catch { detailPost.value = post; }
+}
 function openForm(post = null) {
   editPost.value = post;
   Object.assign(form, { title: post?.title ?? "", content: post?.content ?? "", content_id: post?.content_id ?? selectedEventId.value ?? "", meet_at: post?.meet_at?.slice(0, 16) ?? "", password: "" });
   schedulePickerOpen.value = false;
   formOpen.value = true;
 }
-function savePost() {
+async function savePost() {
   if (!form.title.trim() || !form.content.trim() || !form.meet_at || !form.password.trim()) return;
-  if (editPost.value) {
-    if (editPost.value.password !== form.password) return;
-    Object.assign(editPost.value, { title: form.title, content: form.content, meet_at: form.meet_at });
-    detailPost.value = editPost.value;
-  } else {
-    posts.value.unshift({ id: Date.now(), title: form.title, content: form.content, content_id: form.content_id || null, meet_at: form.meet_at, created_at: new Date().toISOString(), comments: [], password: form.password });
+  try {
+    if (editPost.value) {
+      await postService.updatePost(editPost.value.id, { title: form.title, content: form.content, password: form.password, meet_at: form.meet_at });
+      detailPost.value = await postService.getPost(editPost.value.id);
+    } else {
+      await postService.createPost({ ...form, content_id: form.content_id || null });
+      currentPage.value = 1;
+      await loadPosts(1);
+    }
+    formOpen.value = false;
+  } catch (error) {
+    window.alert(error.message || "게시글을 저장하지 못했습니다.");
   }
-  formOpen.value = false;
 }
-function deletePost() {
-  if (!detailPost.value || detailPost.value.password !== password.value) return;
-  posts.value = posts.value.filter((post) => post.id !== detailPost.value.id);
-  password.value = ""; deleteOpen.value = false; detailPost.value = null;
+async function deletePost() {
+  if (!detailPost.value || !password.value.trim()) return;
+  try {
+    await postService.deletePost(detailPost.value.id, password.value);
+    password.value = "";
+    deleteOpen.value = false;
+    detailPost.value = null;
+    await loadPosts(currentPage.value);
+  } catch (error) {
+    window.alert(error.message || "게시글을 삭제하지 못했습니다.");
+  }
 }
-function addComment() {
+async function addComment() {
   if (!comment.content.trim() || !comment.password.trim() || !detailPost.value) return;
-  detailPost.value.comments.push({ id: Date.now(), content: comment.content, created_at: new Date().toISOString(), password: comment.password });
-  comment.content = ""; comment.password = "";
+  try {
+    await commentService.createComment(detailPost.value.id, { content: comment.content, password: comment.password });
+    detailPost.value = await postService.getPost(detailPost.value.id);
+    comment.content = "";
+    comment.password = "";
+  } catch (error) {
+    window.alert(error.message || "댓글을 등록하지 못했습니다.");
+  }
 }
-function sendChat() {
+function startCommentEdit(item) {
+  commentEdit.id = item.id;
+  commentEdit.content = item.content;
+  commentEdit.password = "";
+}
+function cancelCommentEdit() {
+  commentEdit.id = null;
+  commentEdit.content = "";
+  commentEdit.password = "";
+}
+async function updateComment(item) {
+  if (!detailPost.value || !commentEdit.content.trim() || !commentEdit.password.trim()) return;
+  try {
+    await commentService.updateComment(detailPost.value.id, item.id, { content: commentEdit.content, password: commentEdit.password });
+    detailPost.value = await postService.getPost(detailPost.value.id);
+    cancelCommentEdit();
+  } catch (error) {
+    window.alert(error.message || "댓글을 수정하지 못했습니다.");
+  }
+}
+async function deleteComment(item) {
+  if (!detailPost.value || !commentEdit.password.trim()) return;
+  try {
+    await commentService.deleteComment(detailPost.value.id, item.id, commentEdit.password);
+    detailPost.value = await postService.getPost(detailPost.value.id);
+    cancelCommentEdit();
+  } catch (error) {
+    window.alert(error.message || "댓글을 삭제하지 못했습니다.");
+  }
+}
+async function sendChat() {
   const text = chatInput.value.trim();
-  if (!text) return;
-  messages.value.push({ id: Date.now(), role: "user", text }); chatInput.value = "";
-  const matched = events.value.find((event) => `${event.title} ${event.venue_name}`.includes(text) || text.includes(event.venue_name?.slice(0, 2)));
-  messages.value.push({ id: Date.now() + 1, role: "bot", text: matched ? `“${matched.title}” 행사는 ${matched.venue_name}에서 열려요. 지도에서 위치를 확인하고 동행 글도 작성해 보세요.` : "현재 등록된 서울 행사를 찾아볼게요. 여의도, 광화문, 서울숲처럼 지역명을 함께 입력해 주세요." });
+  if (!text || chatLoading.value) return;
+
+  const userMessage = { id: Date.now(), role: "user", text, createdAt: Date.now() };
+  const context = buildChatContext(messages.value);
+  messages.value.push(userMessage);
+  chatInput.value = "";
+  chatLoading.value = true;
+  saveChatHistory(messages.value);
+
+  try {
+    const response = await chatService.sendMessage(text, context);
+    const reply = typeof response?.reply === "string" && response.reply.trim()
+      ? response.reply.trim()
+      : "답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+    messages.value.push({ id: response?.id || Date.now() + 1, role: "bot", text: reply, createdAt: Date.now() });
+  } catch (error) {
+    messages.value.push({ id: Date.now() + 1, role: "bot", text: error.message || "챗봇 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.", createdAt: Date.now() });
+  } finally {
+    chatLoading.value = false;
+    saveChatHistory(messages.value);
+  }
 }
-function receiveSearch(event) { query.value = event.detail ?? ""; currentPage.value = 1; }
+async function receiveSearch(event) { query.value = event.detail ?? ""; await loadPosts(1); }
 function receiveCreate() { openForm(); }
 
 onMounted(async () => {
+  beginChatSession();
+  const history = loadChatHistory();
+  if (history.length) messages.value = history.map((message, index) => ({ ...message, id: `${message.createdAt}-${index}` }));
   window.addEventListener("vibemap-search", receiveSearch);
   window.addEventListener("vibemap-create-post", receiveCreate);
   try {
@@ -179,6 +283,7 @@ onMounted(async () => {
     events.value = response?.data?.length ? response.data : fallbackEvents;
   } catch { events.value = fallbackEvents; }
   finally { loading.value = false; }
+  await loadPosts(1);
 });
 onBeforeUnmount(() => { window.removeEventListener("vibemap-search", receiveSearch); window.removeEventListener("vibemap-create-post", receiveCreate); });
 </script>
@@ -193,7 +298,7 @@ onBeforeUnmount(() => { window.removeEventListener("vibemap-search", receiveSear
         </div>
         <MapView :markers="filteredEvents" :selected-event-id="selectedEventId" :selected-event="selectedEvent" :on-select-event="selectEvent" :on-view-event="viewEvent" />
       </section>
-      <EventPanel :posts="pagedPosts" :events="events" :loading="loading" :active-post-id="selectedPostId" :page="currentPage" :page-count="pageCount" :total="filteredPosts.length" @select-post="openDetail" @change-page="changePage" />
+      <EventPanel :posts="posts" :events="events" :loading="postsLoading" :active-post-id="selectedPostId" :page="currentPage" :page-count="postPageCount" :total="postTotal" @select-post="openDetail" @change-page="changePage" />
     </div>
 
     <div v-if="eventDetail" class="modal-backdrop" @click.self="eventDetail = null"><article class="modal-card event-detail-modal"><button class="modal-close" type="button" aria-label="닫기" @click="eventDetail = null"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg></button><img :src="eventDetail.image_url" :alt="eventDetail.title" class="event-detail-image" /><p class="eyebrow">서울 행사</p><h2>{{ eventDetail.title }}</h2><p class="event-detail-place">📍 {{ eventDetail.venue_name }} · {{ eventDetail.venue_address }}</p><div class="modal-footer"><button class="button button-primary" type="button" @click="selectEvent(eventDetail); eventDetail = null; openForm()">이 행사로 모집 글쓰기</button></div></article></div>
@@ -208,7 +313,7 @@ onBeforeUnmount(() => { window.removeEventListener("vibemap-search", receiveSear
         <div class="detail-meta"><span>🗓 만남 {{ formatDate(detailPost.meet_at, true) }}</span><span>🕘 작성 {{ formatDate(detailPost.created_at, true) }}</span></div>
         <p class="detail-content">{{ detailPost.content }}</p>
         <div class="detail-actions"><button class="button button-secondary" type="button" @click="openForm(detailPost)">수정</button><button class="button button-danger" type="button" @click="deleteOpen = true">삭제</button></div>
-        <section class="comment-section"><h3>💬 댓글 {{ detailPost.comments.length }}</h3><div v-for="item in detailPost.comments" :key="item.id" class="comment-item"><p>{{ item.content }}</p><span>{{ formatDate(item.created_at, true) }}</span></div><p v-if="!detailPost.comments.length" class="muted">아직 댓글이 없습니다. 첫 댓글을 남겨 보세요.</p><textarea v-model="comment.content" rows="2" placeholder="댓글을 입력하세요"></textarea><div class="comment-form"><input v-model="comment.password" type="password" placeholder="비밀번호" /><button class="button button-primary" type="button" @click="addComment">댓글 등록</button></div></section>
+        <section class="comment-section"><h3>💬 댓글 {{ detailPost.comments?.length || 0 }}</h3><div v-for="item in detailPost.comments || []" :key="item.id" class="comment-item"><p>{{ item.content }}</p><span>{{ formatDate(item.created_at, true) }}</span><div class="comment-actions"><button class="button button-secondary" type="button" @click="startCommentEdit(item)">수정</button></div><div v-if="commentEdit.id === item.id" class="comment-form"><input v-model="commentEdit.content" placeholder="댓글 내용" /><input v-model="commentEdit.password" type="password" placeholder="비밀번호" /><button class="button button-primary" type="button" @click="updateComment(item)">저장</button><button class="button button-danger" type="button" @click="deleteComment(item)">삭제</button><button class="button button-secondary" type="button" @click="cancelCommentEdit">취소</button></div></div><p v-if="!(detailPost.comments?.length)" class="muted">아직 댓글이 없습니다. 첫 댓글을 남겨 보세요.</p><textarea v-model="comment.content" rows="2" placeholder="댓글을 입력하세요"></textarea><div class="comment-form"><input v-model="comment.password" type="password" placeholder="비밀번호" /><button class="button button-primary" type="button" @click="addComment">댓글 등록</button></div></section>
       </article>
     </div>
 
@@ -217,6 +322,6 @@ onBeforeUnmount(() => { window.removeEventListener("vibemap-search", receiveSear
     <div v-if="deleteOpen" class="modal-backdrop" @click.self="deleteOpen = false"><form class="modal-card password-modal" @submit.prevent="deletePost"><h2>게시글 삭제</h2><p class="muted">작성할 때 입력한 비밀번호를 입력하세요.</p><input v-model="password" type="password" autofocus placeholder="비밀번호" /><div class="modal-footer"><button class="button button-secondary" type="button" @click="deleteOpen = false">취소</button><button class="button button-danger" type="submit">삭제</button></div></form></div>
 
     <button class="chat-fab" :class="{ 'chat-fab-open': chatOpen }" type="button" :aria-label="chatOpen ? '채팅 닫기' : '채팅 열기'" @click="chatOpen = !chatOpen"><svg v-if="chatOpen" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg><svg v-else viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 15.5A4.5 4.5 0 0 1 15.5 20H9l-5 3v-3.7A4.5 4.5 0 0 1 1 15.5v-8A4.5 4.5 0 0 1 5.5 3h10A4.5 4.5 0 0 1 20 7.5v8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /></svg></button>
-    <section v-if="chatOpen" class="chat-window"><header><strong>축제 도우미</strong><span>AI 챗봇</span></header><div class="chat-messages"><p v-for="message in messages" :key="message.id" :class="['chat-message', message.role]">{{ message.text }}</p></div><form class="chat-input" @submit.prevent="sendChat"><input v-model="chatInput" placeholder="메시지를 입력하세요" /><button class="button button-primary" type="submit">전송</button></form></section>
+    <section v-if="chatOpen" class="chat-window"><header><strong>축제 도우미</strong><span>AI 챗봇</span></header><div class="chat-messages"><p v-for="message in messages" :key="message.id" :class="['chat-message', message.role]">{{ message.text }}</p><p v-if="chatLoading" class="chat-message bot">답변을 작성하고 있어요.</p></div><form class="chat-input" @submit.prevent="sendChat"><input v-model="chatInput" :disabled="chatLoading" placeholder="메시지를 입력하세요" /><button class="button button-primary" type="submit" :disabled="chatLoading">{{ chatLoading ? '전송 중' : '전송' }}</button></form></section>
   </section>
 </template>

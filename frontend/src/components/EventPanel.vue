@@ -25,6 +25,23 @@ function findEvent(events, contentId) {
   return events.find((event) => String(event.id) === String(contentId));
 }
 
+// 게시물에 실려온 축제 정보를 우선 사용하고, 없으면 로드된 이벤트 목록에서 보완한다.
+function eventTitle(post, events) {
+  return post.content_title || findEvent(events, post.content_id)?.title || null;
+}
+
+function eventStart(post, events) {
+  return post.content_start_date || findEvent(events, post.content_id)?.eventstartdate || null;
+}
+
+function eventEnd(post, events) {
+  return post.content_end_date || findEvent(events, post.content_id)?.eventenddate || null;
+}
+
+function eventVenue(post, events) {
+  return post.content_venue_name || findEvent(events, post.content_id)?.venue_name || null;
+}
+
 defineProps({
   posts: {
     type: Array,
@@ -96,16 +113,16 @@ defineEmits(["select-post", "change-page"]);
 
         <div class="post-card-footer">
           <span
-            v-if="findEvent(events, post.content_id)"
+            v-if="eventVenue(post, events)"
             class="post-card-tag"
           >
-            {{
-              findEvent(events, post.content_id)
-                ?.venue_name || "장소 정보 없음"
-            }}
+            {{ eventVenue(post, events) }}
           </span>
-          <span v-if="findEvent(events, post.content_id)" class="post-card-tag">
-            축제 {{ formatEventDate(findEvent(events, post.content_id)?.eventstartdate) }} ~ {{ formatEventDate(findEvent(events, post.content_id)?.eventenddate) }}
+          <span v-if="eventTitle(post, events)" class="post-card-tag">
+            🎪 {{ eventTitle(post, events) }}
+          </span>
+          <span v-if="eventStart(post, events) || eventEnd(post, events)" class="post-card-tag">
+            축제 {{ formatEventDate(eventStart(post, events)) }} ~ {{ formatEventDate(eventEnd(post, events)) }}
           </span>
           <span class="post-card-meta">{{ formatDateTime(post.created_at, true) }}</span>
         </div>

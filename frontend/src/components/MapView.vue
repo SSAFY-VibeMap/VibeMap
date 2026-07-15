@@ -52,6 +52,38 @@ function loadKakaoMaps() {
   });
 }
 
+function moveToCurrentLocation(isInitial = false) {
+  if (!navigator.geolocation) {
+    if (!isInitial) alert("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
+    return;
+  }
+
+  // Geolocation API를 통해 현재 위치 좌표를 가져옴
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const locPosition = new window.kakao.maps.LatLng(lat, lon);
+      
+      if (map) {
+        if (isInitial) {
+          map.setCenter(locPosition); // 초기 로드 시에는 애니메이션 없이 즉시 이동
+        } else {
+          map.panTo(locPosition); // 버튼 클릭 시에는 부드럽게 이동
+        }
+      }
+    },
+    (error) => {
+      if (!isInitial) {
+        console.error("위치 정보를 가져오는데 실패했습니다.", error);
+        alert("위치 정보를 가져올 수 없습니다. 권한을 확인해주세요.");
+      }
+      // 위치 정보를 가져오지 못한 경우 기본값(광화문) 유지
+    },
+    { enableHighAccuracy: true, timeout: 5000 } // 정확도 향상 및 타임아웃 설정
+  );
+}
+
 function clearMarkers() {
   kakaoMarkers.forEach((marker) => marker.setMap(null));
   kakaoMarkers = [];
@@ -62,6 +94,7 @@ function renderMarkers() {
   clearMarkers();
 
   const events = props.markers.filter(validCoordinates);
+  if (events.length === 0) return;
   const bounds = new window.kakao.maps.LatLngBounds();
   events.forEach((event) => {
     const position = new window.kakao.maps.LatLng(Number(event.latitude), Number(event.longitude));
@@ -127,6 +160,7 @@ onMounted(async () => {
         center: new kakao.maps.LatLng(37.5665, 126.978),
         level: 6,
       });
+      
 
       // If parent provided an initial center, apply it
       if (props.initialCenter && Number.isFinite(Number(props.initialCenter.latitude)) && Number.isFinite(Number(props.initialCenter.longitude))) {
@@ -152,6 +186,7 @@ onMounted(async () => {
           // ignore
         }
       });
+      moveToCurrentLocation(true);
       renderMarkers();
     });
   } catch (error) {
@@ -190,6 +225,14 @@ onBeforeUnmount(() => {
   <section class="map-card">
     <div class="map-stage">
       <div ref="mapElement" class="kakao-map" aria-label="행사 위치 지도"></div>
+      <button 
+        type="button" 
+        class="my-location-btn" 
+        @click="moveToCurrentLocation()" 
+        aria-label="내 현재 위치로 이동"
+      >
+        🎯 내 위치
+      </button>
       <span v-if="mapError" class="map-warning">{{ mapError }}</span>
       <article v-if="props.selectedEvent" class="selected-event-card map-selected-event">
         <img :src="props.selectedEvent.image_url" :alt="props.selectedEvent.title" class="selected-event-image" />
@@ -202,3 +245,35 @@ onBeforeUnmount(() => {
     </div>
   </section>
 </template>
+
+<style scoped>
+/* 지도 스테이지에 relative 속성이 있어야 버튼을 맵 내부 우상단에 절대 위치로 띄울 수 있습니다. */
+.map-stage {
+  position: relative;
+}
+
+/* 내 위치 버튼 CSS */
+.my-location-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 10; /* 카카오맵(보통 z-index가 낮음)보다 위에 노출되도록 설정 */
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  font-size: 14px;
+  font-weight: 600;
+  color: #333333;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.my-location-btn:hover {
+  background-color: #f5f5f5;
+}
+</style>

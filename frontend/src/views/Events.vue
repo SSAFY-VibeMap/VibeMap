@@ -7,6 +7,7 @@ import { postService } from "../services/postService";
 import { commentService } from "../services/commentService";
 import { chatService } from "../services/chatService";
 import { beginChatSession, buildChatContext, loadChatHistory, saveChatHistory } from "../services/chatHistory";
+import { toast } from "vue-sonner";
 
 const fallbackEvents = [
   { id: "125678", title: "여의도 한강 불빛축제", image_url: "https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=800&q=80", venue_name: "여의도 한강공원", venue_address: "서울 영등포구 여의동로 330", latitude: 37.5281, longitude: 126.9346 },
@@ -214,7 +215,7 @@ async function savePost() {
     }
     formOpen.value = false;
   } catch (error) {
-    window.alert(error.message || "게시글을 저장하지 못했습니다.");
+    toast.error(error.message || "게시글을 저장하지 못했습니다.");
   }
 }
 async function deletePost() {
@@ -226,7 +227,7 @@ async function deletePost() {
     detailPost.value = null;
     await loadPosts(currentPage.value);
   } catch (error) {
-    window.alert(error.message || "게시글을 삭제하지 못했습니다.");
+    toast.error(error.message || "게시글을 삭제하지 못했습니다.");
   }
 }
 async function addComment() {
@@ -237,7 +238,7 @@ async function addComment() {
     comment.content = "";
     comment.password = "";
   } catch (error) {
-    window.alert(error.message || "댓글을 등록하지 못했습니다.");
+    toast.error(error.message || "댓글을 등록하지 못했습니다.");
   }
 }
 function startCommentEdit(item) {
@@ -257,7 +258,7 @@ async function updateComment(item) {
     detailPost.value = await postService.getPost(detailPost.value.id);
     cancelCommentEdit();
   } catch (error) {
-    window.alert(error.message || "댓글을 수정하지 못했습니다.");
+    toast.error(error.message || "댓글을 수정하지 못했습니다.");
   }
 }
 async function deleteComment(item) {
@@ -267,7 +268,7 @@ async function deleteComment(item) {
     detailPost.value = await postService.getPost(detailPost.value.id);
     cancelCommentEdit();
   } catch (error) {
-    window.alert(error.message || "댓글을 삭제하지 못했습니다.");
+    toast.error(error.message || "댓글을 삭제하지 못했습니다.");
   }
 }
 async function sendChat() {

@@ -97,7 +97,7 @@ VITE_KAKAO_MAP_API_KEY=...
 cd chatbot
 
 # 가상환경 활성화 후
-python -c "from app.database import engine; from app.models import *; engine.create_all()"
+python -c "from backend.app.database import engine; from backend.app.models import *; engine.create_all()"
 ```
 
 ---
@@ -217,7 +217,7 @@ cd chatbot
 python -c "from dotenv import load_dotenv; load_dotenv(); import os; print('API KEY:', os.getenv('OPENAI_API_KEY')[:10]+'***')"
 
 # 2. DB 연결 확인
-python -c "from app.database import engine; engine.connect(); print('DB Connected')"
+python -c "from backend.app.database import engine; engine.connect(); print('DB Connected')"
 
 # 3. API 서버 시작
 uvicorn app.main:app --reload

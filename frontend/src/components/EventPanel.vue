@@ -80,7 +80,6 @@ defineEmits(["select-post", "change-page"]);
   <section class="event-panel">
     <div class="section-head">
       <h2>모집 게시판</h2>
-      <span class="section-badge">{{ total ?? posts.length }}개 글</span>
     </div>
 
     <div v-if="loading" class="event-stack">

@@ -196,6 +196,8 @@ textarea:focus {
 .search-field input {
   padding: 0;
   border: 0;
+  height: 2rem;
+  line-height: 2rem;
   background: transparent;
   box-shadow: none;
   caret-color: var(--primary);

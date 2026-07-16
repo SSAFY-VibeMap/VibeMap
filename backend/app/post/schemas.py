@@ -50,6 +50,9 @@ class PostSummary(BaseModel):
     title: str
     content: str
     content_id: str | None = None
+    content_title: str | None = None
+    content_start_date: str | None = None
+    content_end_date: str | None = None
     meet_at: datetime | None = None
     created_at: datetime
     updated_at: datetime | None = None

@@ -15,6 +15,32 @@ from app.post.schemas import (
     PostSummary,
     PostUpdate,
 )
+from app.event.service import EventService
+
+
+event_service = EventService()
+
+
+def _attach_event_fields(post: Post) -> None:
+    # Ensure attributes exist on the SQLAlchemy instance so Pydantic can read them
+    cid = getattr(post, "content_id", None)
+    if not cid:
+        setattr(post, "content_title", None)
+        setattr(post, "content_start_date", None)
+        setattr(post, "content_end_date", None)
+        return
+
+    ev = event_service.get_event_by_id(str(cid))
+    if ev:
+        setattr(post, "content_title", ev.get("title"))
+        setattr(post, "content_start_date", ev.get("eventstartdate"))
+        setattr(post, "content_end_date", ev.get("eventenddate"))
+    else:
+        setattr(post, "content_title", None)
+        setattr(post, "content_start_date", None)
+        setattr(post, "content_end_date", None)
+
+    print(f"[DBG] attach_event_fields: post.id={getattr(post,'id',None)} content_id={cid} ev={ev}")
 
 
 def verify_password(saved_password: str, request_password: str) -> None:
@@ -61,6 +87,10 @@ def list_posts(
     posts = db.scalars(query.order_by(Post.created_at.desc()).offset((page - 1) * limit).limit(limit)).all()
     total_page = ceil(total / limit) if total else 0
 
+    # attach event metadata for each post so response includes content details
+    for post in posts:
+        _attach_event_fields(post)
+
     return PostListResponse(
         data=[PostSummary.model_validate(post) for post in posts],
         total_page=total_page,
@@ -73,6 +103,7 @@ def get_post_detail(db: Session, post_id: int) -> Post:
     post = db.scalars(select(Post).options(selectinload(Post.comments)).where(Post.id == post_id)).first()
     if post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="게시글을 찾을 수 없습니다.")
+    _attach_event_fields(post)
     return post
 
 
@@ -81,6 +112,7 @@ def create_post(db: Session, payload: PostCreate) -> Post:
     db.add(post)
     db.commit()
     db.refresh(post)
+    _attach_event_fields(post)
     return post
 
 
@@ -94,6 +126,7 @@ def update_post(db: Session, post_id: int, payload: PostUpdate) -> Post:
 
     db.commit()
     db.refresh(post)
+    _attach_event_fields(post)
     return post
 
 

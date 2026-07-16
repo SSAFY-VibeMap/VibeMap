@@ -104,9 +104,6 @@ defineEmits(["select-post", "change-page"]);
       >
         <div class="post-card-header">
           <h3 class="post-card-title">{{ post.title }}</h3>
-          <span class="section-badge post-count-badge">{{
-            post.comments?.length ?? 0
-          }}</span>
         </div>
 
         <p class="post-card-content">{{ post.content }}</p>

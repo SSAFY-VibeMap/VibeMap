@@ -533,7 +533,7 @@ textarea:focus {
 
 .post-card-content,
 .event-card-location {
-  margin: 0;
+  margin-top: 0.65rem;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
@@ -544,24 +544,43 @@ textarea:focus {
   word-break: break-word;
   line-height: 1.5;
   font-size: 0.95rem;
+
 }
 
 .post-count-badge {
   flex: 0 0 auto;
 }
 
-.post-card-footer,
-.event-card-meta {
+.post-card-footer {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.5rem 0.65rem;
+  width: 100%;
+  overflow: hidden;
+}
+
+.post-card-meta {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  
+  flex-shrink: 0; 
+  white-space: nowrap; 
 }
 
 .post-card-tag,
 .event-card-tag {
-  display: inline-flex;
-  align-items: center;
+  display: inline-block; 
+  
+  flex-shrink: 1; 
+  min-width: 0;
+  max-width: 100%;
+  
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
   min-height: 1.8rem;
   padding: 0.3rem 0.65rem;
   border: 1px solid var(--border);
@@ -569,12 +588,9 @@ textarea:focus {
   background: rgba(255, 255, 255, 0.95);
   color: var(--foreground);
   font-size: 0.82rem;
-}
-
-.post-card-meta {
-  margin-left: auto;
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
+  
+  vertical-align: middle;
+  line-height: 1.2rem; 
 }
 
 .post-card-skeleton,
